@@ -1,14 +1,16 @@
 package utils
 
+import "errors"
+
 type Observer interface {
-	BeforeTurn(status *Status)
-	AfterTurn(status *Status)
+	BeforeTurn(status *Status, tgtStt int)
+	AfterTurn(status *Status, srcStt int)
 }
 
 type Status struct {
 	AllStatus	[]int
-	StatusVal	int
-	Observers	[]Observer
+	statusVal	int
+	observers	[]Observer
 }
 
 func (stt *Status) Init(stts []int) {
@@ -17,21 +19,26 @@ func (stt *Status) Init(stts []int) {
 	}
 }
 
-func (stt *Status) TurnTo(status int) int {
-	orgStt := stt.StatusVal
+func (stt *Status) TurnTo(status int) (int, error) {
+	orgStt := stt.statusVal
 	if !Contains(stt.AllStatus, status) {
-		return orgStt
+		return orgStt, errors.New("Could not find identified status")
 	}
-	for _, obs := range stt.Observers {
-		obs.BeforeTurn(stt)
+	for _, obs := range stt.observers {
+		obs.BeforeTurn(stt, status)
 	}
-	stt.StatusVal = status
-	for _, obs := range stt.Observers {
-		obs.AfterTurn(stt)
+	stt.statusVal = status
+	for _, obs := range stt.observers {
+		obs.AfterTurn(stt, orgStt)
 	}
-	return orgStt
+	return orgStt, nil
 }
 
 func (stt *Status) Current() int {
-	return stt.StatusVal
+	return stt.statusVal
+}
+
+func (stt *Status) RegAsObs(obs Observer) error {
+	stt.observers = append(stt.observers, obs)
+	return nil
 }

@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"utils"
+	"managers"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -85,12 +86,12 @@ func displayAll(db *sql.DB) bool {
 type TestObs struct {
 }
 
-func (o *TestObs) BeforeTurn(s *utils.Status) {
-	log.Printf("Before turn: %d\n", s.Current())
+func (o *TestObs) BeforeTurn(s *utils.Status, tgtStt int) {
+	log.Printf("Before turn: %d, to %d\n", s.Current(), tgtStt)
 }
 
-func (o *TestObs) AfterTurn(s *utils.Status) {
-	log.Printf("After turn: %d\n", s.Current())
+func (o *TestObs) AfterTurn(s *utils.Status, srcStt int) {
+	log.Printf("After turn: %d, from %d\n", s.Current(), srcStt)
 }
 
 func main() {
@@ -232,14 +233,30 @@ func main() {
 		NONE = iota
 		INIT
 		START
+		UNEXISTS
 	)
 	a := utils.Status {
 		AllStatus:	[]int { NONE, INIT, START },
-		StatusVal:	NONE,
-		Observers:	[]utils.Observer { &o },
 	}
+	a.RegAsObs(&o)
 	log.Println(a.Current())
 
 	a.TurnTo(START)
 	log.Println(a.Current())
+
+	if _, err = a.TurnTo(UNEXISTS); err != nil {
+		log.Println(err)
+	}
+
+	//Test component and service
+	fmt.Println()
+	var component managers.Component
+	component, _ = managers.GetComponent(managers.SERVICE)
+	service := component.(*managers.Service)
+	if err = service.Init(); err != nil {
+		log.Fatal(err)
+	}
+	if err = service.Start(); err != nil {
+		log.Fatal(err)
+	}
 }
