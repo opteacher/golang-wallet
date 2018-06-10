@@ -11,6 +11,7 @@ import (
 	"time"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"utils"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -81,6 +82,17 @@ func displayAll(db *sql.DB) bool {
 	return true
 }
 
+type TestObs struct {
+}
+
+func (o *TestObs) BeforeTurn(s *utils.Status) {
+	log.Printf("Before turn: %d\n", s.Current())
+}
+
+func (o *TestObs) AfterTurn(s *utils.Status) {
+	log.Printf("After turn: %d\n", s.Current())
+}
+
 func main() {
 	fmt.Println("abcd")
 
@@ -131,10 +143,15 @@ func main() {
 	time.Sleep(5 * time.Second)
 
 	//Connect database
+	var db *sql.DB
+	var insertTest *sql.Stmt
+	var tx *sql.Tx
+	var result sql.Result
+	var affectedRows [20]int64
+
 	fmt.Println()
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s?charset=utf8&tls=skip-verify",
-		DBUserName, DBPassword, DBUrl, DBName))
-	if err != nil {
+	if db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s?charset=utf8&tls=skip-verify",
+		DBUserName, DBPassword, DBUrl, DBName)); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -155,8 +172,7 @@ func main() {
 	log.Println("Create table succeed")
 
 	//Test insert and transaction
-	insertTest, err := db.Prepare(InsertTest)
-	if err != nil {
+	if insertTest, err = db.Prepare(InsertTest); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -166,36 +182,33 @@ func main() {
 	// 	return
 	// }
 
-	tx, err := db.Begin()
-	if err != nil {
+	if tx, err = db.Begin(); err != nil {
 		log.Fatal(err)
 		return
 	}
-	result, err := tx.Stmt(insertTest).Exec("opteacher", "12345")
-	if err != nil {
-		log.Fatal(err)
-		tx.Rollback()
-		return
-	}
-	affectdRows1, _ := result.RowsAffected()
-	result, err = tx.Stmt(insertTest).Exec("tyoukasin", "54321")
-	if err != nil {
+	
+	if result, err = tx.Stmt(insertTest).Exec("opteacher", "12345"); err != nil {
 		log.Fatal(err)
 		tx.Rollback()
 		return
 	}
-	affectdRows2, _ := result.RowsAffected()
+	affectedRows[0], _ = result.RowsAffected()
+	if result, err = tx.Stmt(insertTest).Exec("tyoukasin", "54321"); err != nil {
+		log.Fatal(err)
+		tx.Rollback()
+		return
+	}
+	affectedRows[1], _ = result.RowsAffected()
 	if err = tx.Commit(); err != nil {
 		log.Fatal(err)
 		tx.Rollback()
 		return
 	}
-	log.Printf("Insert table succeed, affected %d rows\n", affectdRows1 + affectdRows2)
+	log.Printf("Insert table succeed, affected %d rows\n", affectedRows[0] + affectedRows[1])
 	if !displayAll(db) { return }
 
 	//Test update
-	result, err = db.Exec(UpdateTest, "abcde", "opteacher")
-	if err != nil {
+	if result, err = db.Exec(UpdateTest, "abcde", "opteacher"); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -204,12 +217,29 @@ func main() {
 	if !displayAll(db) { return }
 
 	//Test delete
-	result, err = db.Exec(DeleteTest, "tyoukasin")
-	if err != nil {
+	if result, err = db.Exec(DeleteTest, "tyoukasin"); err != nil {
 		log.Fatal(err)
 		return
 	}
 	lastDeleteId, _ := result.RowsAffected()
 	log.Printf("Delete table record succeed, affected %d rows\n", lastDeleteId)
 	if !displayAll(db) { return }
+
+	//Test status and observer
+	fmt.Println()
+	o := TestObs {}
+	const (
+		NONE = iota
+		INIT
+		START
+	)
+	a := utils.Status {
+		AllStatus:	[]int { NONE, INIT, START },
+		StatusVal:	NONE,
+		Observers:	[]utils.Observer { &o },
+	}
+	log.Println(a.Current())
+
+	a.TurnTo(START)
+	log.Println(a.Current())
 }
