@@ -1,6 +1,6 @@
 package utils
 
-func Contains(array []int, target int) bool {
+func ArrayContains(array []int, target int) bool {
 	for i := range array {
 		if i == target { return true }
 	}

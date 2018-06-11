@@ -21,7 +21,7 @@ func (stt *Status) Init(stts []int) {
 
 func (stt *Status) TurnTo(status int) (int, error) {
 	orgStt := stt.statusVal
-	if !Contains(stt.AllStatus, status) {
+	if !ArrayContains(stt.AllStatus, status) {
 		return orgStt, errors.New("Could not find identified status")
 	}
 	for _, obs := range stt.observers {

@@ -45,7 +45,7 @@ func testChannelByOK() {
 const DBUrl			= ""
 const DBName		= "test"
 const DBUserName	= "root"
-const DBPassword	= "59524148chenOP"
+const DBPassword	= "12345"
 
 const DropTable		= "DROP TABLE IF EXISTS user"
 const CreateTable	= `CREATE TABLE IF NOT EXISTS user (
@@ -251,8 +251,8 @@ func main() {
 	//Test component and service
 	fmt.Println()
 	var component managers.Component
-	component, _ = managers.GetComponent(managers.SERVICE)
-	service := component.(*managers.Service)
+	component, _ = managers.GetComponent(managers.DEPOSIT_SERVICE)
+	service := component.(*managers.DepositService)
 	if err = service.Init(); err != nil {
 		log.Fatal(err)
 	}
