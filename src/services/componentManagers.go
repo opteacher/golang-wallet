@@ -1,23 +1,21 @@
-package managers
+package services
 
 import (
 	"dao"
 	"errors"
+	"utils"
 )
 
 const (
 	DEPOSIT_SERVICE = iota
 	ADDRESS_DAO
+	CONFIG
 )
 
-type Component interface {
-	Create() error
-	IsCreate() bool
-}
-
 var components = map[int]Component {
-	DEPOSIT_SERVICE:		NewDepositSvc(),
+	DEPOSIT_SERVICE:	NewDepositSvc(),
 	ADDRESS_DAO:		dao.NewAddressDAO(),
+	CONFIG:				utils.NewConfig(),
 }
 
 func GetComponent(name int) (Component, error) {

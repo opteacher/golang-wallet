@@ -12,7 +12,7 @@ var db *sql.DB
 const DBUrl			= ""
 const DBName		= "test"
 const DBUserName	= "root"
-const DBPassword	= "12345"
+const DBPassword	= "59524148chenOP"
 
 func Connect() (*sql.DB, error) {
 	if db != nil {

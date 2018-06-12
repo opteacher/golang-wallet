@@ -12,7 +12,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"utils"
-	"managers"
+	"services"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -45,7 +45,7 @@ func testChannelByOK() {
 const DBUrl			= ""
 const DBName		= "test"
 const DBUserName	= "root"
-const DBPassword	= "12345"
+const DBPassword	= "59524148chenOP"
 
 const DropTable		= "DROP TABLE IF EXISTS user"
 const CreateTable	= `CREATE TABLE IF NOT EXISTS user (
