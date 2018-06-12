@@ -79,7 +79,6 @@ func (service *DepositService) loadAddresses() error {
 
 func (service *DepositService) loadIncompleteDeposits() error  {
 	coinSetting := utils.GetConfig().GetCoinSettings()
-
 }
 
 var _self *DepositService

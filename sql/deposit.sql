@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS deposit (
   height INTEGER(11) NOT NULL,
   tx_index INTEGER,
   create_time DATETIME DEFAULT NOW(),
-  update_time DATETIME DEFAULT NOW() ON UPDATE NOW(),
+  update_time DATETIME ON UPDATE NOW(),
   PRIMARY KEY(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
-# FirstFindDeposit
+# AddScannedDeposit
 INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index) VALUES (?, ?, ?, ?, ?, ?)

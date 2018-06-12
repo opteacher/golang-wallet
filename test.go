@@ -12,7 +12,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"utils"
 	"dao"
-	"sync"
+	"entities"
+	"rpcs"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -45,7 +46,7 @@ func testChannelByOK() {
 const DBUrl			= ""
 const DBName		= "test"
 const DBUserName	= "root"
-const DBPassword	= "12345"
+const DBPassword	= "59524148chenOP"
 
 const DropTable		= "DROP TABLE IF EXISTS user"
 const CreateTable	= `CREATE TABLE IF NOT EXISTS user (
@@ -113,35 +114,35 @@ func main() {
 	log.Println(string(bodyStr))
 
 	// Test goroutine
-	wg := new(sync.WaitGroup)
-	wg.Add(2)
-	for i := 0; i < 2; i++ {
-		go func(id int) {
-			log.Println(id);
-			defer wg.Done()
-		}(i)
-	}
-	wg.Wait()
+	//wg := new(sync.WaitGroup)
+	//wg.Add(2)
+	//for i := 0; i < 2; i++ {
+	//	go func(id int) {
+	//		log.Println(id);
+	//		defer wg.Done()
+	//	}(i)
+	//}
+	//wg.Wait()
 
 	// Test channel
-	fmt.Println()
-	go testChannel()
-	for i := 0; i < 5; i++ {
-		sig <- i
-	}
-	close(sig)
-	<- end
-	close(end)
+	//fmt.Println()
+	//go testChannel()
+	//for i := 0; i < 5; i++ {
+	//	sig <- i
+	//}
+	//close(sig)
+	//<- end
+	//close(end)
 
 	//Use of-idiom test channel
-	fmt.Println()
-	sig = make(chan int)
-	go testChannelByOK()
-	sig <- 20
-	sig <- 30
-	sig <- 40
-	close(sig)
-	time.Sleep(5 * time.Second)
+	//fmt.Println()
+	//sig = make(chan int)
+	//go testChannelByOK()
+	//sig <- 20
+	//sig <- 30
+	//sig <- 40
+	//close(sig)
+	//time.Sleep(5 * time.Second)
 
 	//Connect database
 	var db *sql.DB
@@ -256,5 +257,25 @@ func main() {
 	//Test DB
 	addressDAO := dao.GetAddressDAO()
 	addressDAO.NewAddress("ETH", "0xabcd")
-	log.Println(addressDAO.FindInuseByAsset("ETH"))
+	addressDAO.NewAddressInuse("BTC", "0x1234")
+	log.Println(addressDAO.FindInuseByAsset("BTC"))
+
+	depositDAO := dao.GetDepositDAO()
+	var deposit entities.Deposit
+	deposit.TxHash	= "0x12345"
+	deposit.Address	= "0xabcd"
+	deposit.Amount	= 1000
+	deposit.TxIndex	= 0
+	deposit.Height	= 200000
+	deposit.Asset	= "ETH"
+	affectedRows[0], err = depositDAO.AddScannedDeposit(deposit)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Add deposit succeed: %d\n", affectedRows[0])
+
+	//Test RPC
+	for i := 0; err == nil; i++ {
+		_, err = rpcs.GetEth().GetTransactions(uint(i))
+	}
 }

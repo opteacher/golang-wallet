@@ -24,6 +24,7 @@ type subsSetting struct {
 type coinSetting struct {
 	Name string	`json:name`
 	Url string	`json:url`
+	Decimal int	`json:decimal`
 }
 
 type Config struct {

@@ -10,5 +10,8 @@ CREATE TABLE IF NOT EXISTS address (
 # NewAddress
 INSERT INTO address (asset, address) VALUES (?, ?)
 
+# NewAddressInuse
+INSERT INTO address (asset, address, inuse) VALUES (?, ?, 1)
+
 # FindByAsset
 SELECT address FROM address WHERE inuse=1 AND asset=?
