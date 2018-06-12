@@ -5,25 +5,16 @@ import (
 	"log"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"utils"
 )
 
-var db *sql.DB
-
-const DBUrl			= ""
-const DBName		= "test"
-const DBUserName	= "root"
-const DBPassword	= "59524148chenOP"
-
-func Connect() (*sql.DB, error) {
-	if db != nil {
-		return db, nil
-	}
-	var err error
-	db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s?charset=utf8&tls=skip-verify",
-		DBUserName, DBPassword, DBUrl, DBName))
+func ConnectMySQL() (*sql.DB, error) {
+	config := utils.GetConfig()
+	params := config.GetSubsSettings().Db
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s?charset=utf8&tls=skip-verify",
+		params.Username, params.Password, params.Url, params.Name))
 	if err != nil {
 		log.Fatal(err)
-		return nil, err
 	}
 	return db, nil
 }

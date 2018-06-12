@@ -5,41 +5,54 @@ import (
 	"log"
 	"fmt"
 	"encoding/json"
+	"sync"
 )
 
-type Config struct {
-	isCreated bool
-	setting struct {
-		Db struct {
-			Url string		`json:url`
-			Name string		`json:name`
-			Username string	`json:username`
-			Password string	`json:password`
-		}					`json:db`
-	}
+type baseSetting struct {
+	Env string	`json:env`
 }
 
-func (cfg *Config) Create() error {
-	var settings struct {
-		Env string	`json:env`
-	}
+type subsSetting struct {
+	Db struct {
+		Url string		`json:url`
+		Name string		`json:name`
+		Username string	`json:username`
+		Password string	`json:password`
+	}					`json:db`
+}
+
+type coinSetting struct {
+	Name string	`json:name`
+	Url string	`json:url`
+}
+
+type Config struct {
+	sync.Once
+	base baseSetting
+	subs subsSetting
+	coin coinSetting
+}
+
+func (cfg *Config) create() error {
 	var err error
-	if err = cfg.loadJson("settings", &settings); err != nil {
+	if err = cfg.loadJson("settings", &cfg.base); err != nil {
 		panic(err)
 	}
-	if err = cfg.loadJson(settings.Env, &cfg.setting); err != nil {
+	if err = cfg.loadJson(cfg.base.Env, &cfg.subs); err != nil {
 		panic(err)
 	}
-	cfg.isCreated = true
+	if err = cfg.loadJson("coin", &cfg.coin); err != nil {
+		panic(err)
+	}
 	return nil
 }
 
 func (cfg *Config) loadJson(fileName string, data interface {}) error {
-	file, err := os.Open(fmt.Sprintf("../config/%s.json", fileName))
+	file, err := os.Open(fmt.Sprintf("config/%s.json", fileName))
 	if err != nil {
-		log.Println(err)
-		return err
+		log.Fatal(err)
 	}
+	defer file.Close()
 
 	chunks := make([]byte, 1024, 1024)
 	bufData := []byte {}
@@ -62,10 +75,27 @@ func (cfg *Config) loadJson(fileName string, data interface {}) error {
 	return nil
 }
 
-func (cfg *Config) IsCreate() bool {
-	return cfg.isCreated
+func (cfg *Config) GetBaseSettings() baseSetting {
+	return cfg.base
 }
 
-func NewConfig() *Config {
-	return new(Config)
+func (cfg *Config) GetSubsSettings() subsSetting  {
+	return cfg.subs
+}
+
+func (cfg *Config) GetCoinSettings() coinSetting {
+	return cfg.coin
+}
+
+var _self *Config
+
+func GetConfig() *Config {
+	if _self == nil {
+		_self = new(Config)
+		_self.Once = sync.Once {}
+		_self.Once.Do(func() {
+			_self.create()
+		})
+	}
+	return _self
 }
