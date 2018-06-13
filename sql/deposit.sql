@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS deposit (
   asset CHAR(32) NOT NULL,
   height INTEGER(11) NOT NULL,
   tx_index INTEGER,
+  status INTEGER(11) DEFAULT 1,
   create_time DATETIME DEFAULT NOW(),
   update_time DATETIME ON UPDATE NOW(),
   PRIMARY KEY(id)
@@ -17,3 +18,9 @@ INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index) VALUES (
 
 # AddDepositWithTime
 INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index, create_time) VALUES (?, ?, ?, ?, ?, ?, ?)
+
+# AddStableDeposit
+INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index, create_time, update_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 2)
+
+# GetUnstableDeposit
+SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM deposit WHERE asset=? AND status<2

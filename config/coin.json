@@ -1,5 +1,6 @@
 {
 	"name": "ETH",
 	"url": "http://18.144.17.127:8545",
-	"decimal": 8
+	"decimal": 8,
+	"stable": 12
 }

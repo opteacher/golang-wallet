@@ -23,6 +23,7 @@ type Eth struct {
 	coinName string
 	callUrl string
 	decimal int
+	Stable int
 }
 
 var __eth *Eth
@@ -43,6 +44,7 @@ func (rpc *Eth) create() {
 	rpc.coinName 	= setting.Name
 	rpc.callUrl		= setting.Url
 	rpc.decimal		= setting.Decimal
+	rpc.Stable		= setting.Stable
 }
 
 type EthSucceedResp struct {
@@ -91,8 +93,9 @@ func (rpc *Eth) sendRequest(method string, params []interface {}, id string) (Et
 	return resBody, nil
 }
 
-func (rpc *Eth) GetTransactions(height uint) ([]entities.Deposit, error) {
+func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error) {
 	var err error
+	// Send get block by number request to get block detail information
 	var resp EthSucceedResp
 	rand.Seed(time.Now().Unix())
 	id := fmt.Sprintf("%d", rand.Intn(1000))
@@ -102,6 +105,7 @@ func (rpc *Eth) GetTransactions(height uint) ([]entities.Deposit, error) {
 		return nil, err
 	}
 
+	// Parse response and take out transactions
 	respData := resp.Result.(map[string]interface {})
 	var txsObj interface {}
 	var ok bool
@@ -111,6 +115,7 @@ func (rpc *Eth) GetTransactions(height uint) ([]entities.Deposit, error) {
 		return nil, err
 	}
 
+	// Defined useful collection function
 	strProp := func(tx map[string]interface {}, key string) (string, error) {
 		var itfc interface {}
 
@@ -140,11 +145,20 @@ func (rpc *Eth) GetTransactions(height uint) ([]entities.Deposit, error) {
 		}
 		return numTmp, nil
 	}
+
+	// Scan all transaction
 	txs := txsObj.([]interface {})
-	deposits := []entities.Deposit {}
+	deposits := []entities.BaseDeposit{}
 	for i, tx := range txs {
 		rawTx := tx.(map[string]interface {})
-		deposit := entities.Deposit {}
+		deposit := entities.BaseDeposit{}
+		if deposit.Address, err = strProp(rawTx, "to"); err != nil {
+			deposit.Address = "create contract"
+		}
+		// If to address isnt belong to our addresses, skip it
+		if !utils.StrArrayContains(addresses, deposit.Address) {
+			continue
+		}
 		deposit.Asset	= "ETH"
 		deposit.TxIndex	= i
 		var heightBint *big.Int
@@ -167,10 +181,20 @@ func (rpc *Eth) GetTransactions(height uint) ([]entities.Deposit, error) {
 		if deposit.TxHash, err = strProp(rawTx, "hash"); err != nil {
 			continue
 		}
-		if deposit.Address, err = strProp(rawTx, "to"); err != nil {
-			deposit.Address = "create contract"
-		}
+
 		deposits = append(deposits, deposit)
 	}
 	return deposits, nil
+}
+
+func (rpc *Eth) GetCurrentHeight() (uint64, error) {
+	var err error
+	var resp EthSucceedResp
+	rand.Seed(time.Now().Unix())
+	id := fmt.Sprintf("%d", rand.Intn(1000))
+	if resp, err = rpc.sendRequest("eth_blockNumber", []interface{} {}, id); err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	return strconv.ParseUint(resp.Result.(string), 16, 64)
 }

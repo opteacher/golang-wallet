@@ -15,6 +15,7 @@ import (
 	"entities"
 	"rpcs"
 	"reflect"
+	"services"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -264,7 +265,7 @@ func main() {
 	log.Println(addressDAO.FindInuseByAsset("BTC"))
 
 	depositDAO := dao.GetDepositDAO()
-	var deposit entities.Deposit
+	var deposit entities.BaseDeposit
 	deposit.TxHash	= "0x12345"
 	deposit.Address	= "0xabcd"
 	deposit.Amount	= 1000
@@ -277,8 +278,8 @@ func main() {
 	log.Printf("Add deposit succeed: %d\n", affectedRows[0])
 
 	//Test RPC
-	var txs []entities.Deposit
-	txs, err = rpcs.GetEth().GetTransactions(120)
+	var txs []entities.BaseDeposit
+	txs, err = rpcs.GetEth().GetTransactions(120, []string {})
 	for i, tx := range txs {
 		if affectedRows[i], err = depositDAO.AddScannedDeposit(tx); err != nil {
 			log.Fatal(err)
@@ -286,4 +287,7 @@ func main() {
 		affectedRows[0] += affectedRows[i]
 	}
 	log.Printf("Add deposits succeed: %d\n", affectedRows[0])
+
+	//Test service
+	services.GetDepositService().Init()
 }

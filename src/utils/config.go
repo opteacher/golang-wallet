@@ -25,6 +25,7 @@ type coinSetting struct {
 	Name string	`json:name`
 	Url string	`json:url`
 	Decimal int	`json:decimal`
+	Stable int	`json:stable`
 }
 
 type Config struct {
