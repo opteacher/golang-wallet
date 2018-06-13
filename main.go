@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"services"
 )
 
 func main() {
-	
+	//Test service
+	services.GetDepositService().Init()
 }

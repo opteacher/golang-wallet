@@ -131,6 +131,7 @@ func (dao *DepositDao) GetUnstableDeposit(asset string) ([]entities.TotalDeposit
 			&deposit.Id,
 			&deposit.TxHash,
 			&deposit.Address,
+			&deposit.Amount,
 			&deposit.Asset,
 			&deposit.Height,
 			&deposit.TxIndex,
@@ -139,7 +140,6 @@ func (dao *DepositDao) GetUnstableDeposit(asset string) ([]entities.TotalDeposit
 			&deposit.UpdateTime,
 		}...); err != nil {
 			log.Println(err)
-			continue
 		}
 		deposits = append(deposits, deposit)
 	}

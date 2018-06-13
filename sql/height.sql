@@ -13,3 +13,6 @@ INSERT INTO height (asset) VALUES (?)
 
 # GetHeight
 SELECT height FROM height WHERE asset=?
+
+# UpdateHeight
+UPDATE height SET height=? WHERE asset=?

@@ -112,3 +112,26 @@ func (dao *HeightDao) GetHeight(asset string) (uint64, error) {
 	err = errors.New("Cant find identified asset")
 	return 0, nil
 }
+
+func (dao *HeightDao) UpdateHeight(asset string, height uint64) (int64, error) {
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		log.Fatal(err)
+	}
+
+	var updateSQL string
+	var ok bool
+	if updateSQL, ok = dao.sqls["UpdateHeight"]; !ok {
+		err = errors.New("Cant find update [height] table SQL")
+		log.Println(err)
+		return 0, err
+	}
+
+	var result sql.Result
+	if result, err = db.Exec(updateSQL, height, asset); err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	return result.RowsAffected()
+}

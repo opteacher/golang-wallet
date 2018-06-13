@@ -48,7 +48,7 @@ func testChannelByOK() {
 const DBUrl			= ""
 const DBName		= "test"
 const DBUserName	= "root"
-const DBPassword	= "12345"
+const DBPassword	= "59524148chenOP"
 
 const DropTable		= "DROP TABLE IF EXISTS user"
 const CreateTable	= `CREATE TABLE IF NOT EXISTS user (
@@ -98,6 +98,7 @@ func (o *TestObs) AfterTurn(s *utils.Status, srcStt int) {
 }
 
 func main() {
+	log.SetFlags(log.Lshortfile)
 	fmt.Println("abcd")
 	var t float64 = 58500000000000000000
 	log.Println(reflect.TypeOf(t).Name())
@@ -253,6 +254,9 @@ func main() {
 		log.Println(err)
 	}
 
+	var totalAffectRows int64
+	var tempAffectRows int64
+
 	//Test config
 	config := utils.GetConfig()
 	log.Println(config.GetBaseSettings())
@@ -272,22 +276,26 @@ func main() {
 	deposit.TxIndex	= 0
 	deposit.Height	= 200000
 	deposit.Asset	= "ETH"
-	if affectedRows[0], err = depositDAO.AddScannedDeposit(deposit); err != nil {
+	if totalAffectRows, err = depositDAO.AddScannedDeposit(deposit); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Add deposit succeed: %d\n", affectedRows[0])
+	log.Printf("Add deposit succeed: %d\n", totalAffectRows)
 
 	//Test RPC
 	var txs []entities.BaseDeposit
-	txs, err = rpcs.GetEth().GetTransactions(120, []string {})
-	for i, tx := range txs {
-		if affectedRows[i], err = depositDAO.AddScannedDeposit(tx); err != nil {
+	txs, err = rpcs.GetEth().GetTransactions(120, []string {
+		"0x43faead79328ca23fbb179af73ab8c0153ed990c",
+	})
+	totalAffectRows = 0
+	for _, tx := range txs {
+		if tempAffectRows, err = depositDAO.AddScannedDeposit(tx); err != nil {
 			log.Fatal(err)
 		}
-		affectedRows[0] += affectedRows[i]
+		totalAffectRows += tempAffectRows
 	}
-	log.Printf("Add deposits succeed: %d\n", affectedRows[0])
+	log.Printf("Add deposits succeed: %d\n", totalAffectRows)
 
 	//Test service
 	services.GetDepositService().Init()
+	services.GetDepositService().Start()
 }

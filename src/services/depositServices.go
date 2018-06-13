@@ -65,19 +65,20 @@ func (service *DepositService) BeforeTurn(s *utils.Status, tgtStt int) {
 		}
 	case START:
 		log.Println("start")
-		// Start goroutine to scan block chain
-		if err = service.startScanChain(); err != nil {
-			log.Fatal(err)
-		}
 	}
 }
 
 func (service *DepositService) AfterTurn(s *utils.Status, srcStt int) {
+	var err error
 	switch s.Current() {
 	case INIT:
 		log.Println("initialized")
 	case START:
 		log.Println("started")
+		// Start goroutine to scan block chain
+		if err = service.startScanChain(); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -117,9 +118,23 @@ func (service *DepositService) getCurrentHeight() error {
 
 func (service *DepositService) startScanChain() error {
 	var err error
+	coinName := utils.GetConfig().GetCoinSettings().Name
 	rpc := rpcs.GetEth()
 	depositDao := dao.GetDepositDAO()
 	for ; err == nil && service.status.Current() == START; service.height++ {
+		log.Printf("height: %d\n", service.height)
+
+		// 获取当前块高
+		var curHeight uint64
+		if curHeight, err = rpc.GetCurrentHeight(); err != nil {
+			log.Printf("Get current height failed: %s\n", err)
+			continue
+		}
+		// 已经达到最高快高
+		if service.height >= curHeight {
+			continue
+		}
+
 		// 获取指定高度的交易
 		var deposits []entities.BaseDeposit
 		if deposits, err = rpc.GetTransactions(uint(service.height), service.addresses); err != nil {
@@ -128,12 +143,6 @@ func (service *DepositService) startScanChain() error {
 		}
 
 		for _, deposit := range deposits {
-			// 获取当前块高
-			var curHeight uint64
-			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
-				log.Printf("Get current height failed: %s\n", err)
-				continue
-			}
 			// 如果已经达到稳定块高，直接存入数据库
 			// @tobo: 通知后台
 			if deposit.Height + uint64(rpc.Stable) >= curHeight {
@@ -145,7 +154,15 @@ func (service *DepositService) startScanChain() error {
 				// 未进入稳定状态，抛给通知等待服务
 			}
 		}
+
+		// 持久化高度到height表
+		if service.height % 50 == 0 {
+			if _, err = dao.GetHeightDAO().UpdateHeight(coinName, service.height); err != nil {
+				log.Println("Update height failed: %s\n", err)
+				continue
+			}
+		}
 	}
 	service.status.TurnTo(STOP)
-	return nil
+	return err
 }

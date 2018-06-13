@@ -95,7 +95,7 @@ func (rpc *Eth) sendRequest(method string, params []interface {}, id string) (Et
 
 func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error) {
 	var err error
-	// Send get block by number request to get block detail information
+	// 发送请求获取指定高度的块
 	var resp EthSucceedResp
 	rand.Seed(time.Now().Unix())
 	id := fmt.Sprintf("%d", rand.Intn(1000))
@@ -105,7 +105,7 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		return nil, err
 	}
 
-	// Parse response and take out transactions
+	// 解析返回数据，提取交易
 	respData := resp.Result.(map[string]interface {})
 	var txsObj interface {}
 	var ok bool
@@ -115,7 +115,7 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		return nil, err
 	}
 
-	// Defined useful collection function
+	// 定义提取属性的方法
 	strProp := func(tx map[string]interface {}, key string) (string, error) {
 		var itfc interface {}
 
@@ -146,7 +146,7 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		return numTmp, nil
 	}
 
-	// Scan all transaction
+	// 扫描所有交易
 	txs := txsObj.([]interface {})
 	deposits := []entities.BaseDeposit{}
 	for i, tx := range txs {
@@ -155,7 +155,7 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		if deposit.Address, err = strProp(rawTx, "to"); err != nil {
 			deposit.Address = "create contract"
 		}
-		// If to address isnt belong to our addresses, skip it
+		// 如果充值地址不属于钱包，跳过
 		if !utils.StrArrayContains(addresses, deposit.Address) {
 			continue
 		}
@@ -196,5 +196,9 @@ func (rpc *Eth) GetCurrentHeight() (uint64, error) {
 		log.Println(err)
 		return 0, err
 	}
-	return strconv.ParseUint(resp.Result.(string), 16, 64)
+	strHeight := resp.Result.(string)
+	if strHeight[0:2] == "0x" {
+		strHeight = strHeight[2:]
+	}
+	return strconv.ParseUint(strHeight, 16, 64)
 }
