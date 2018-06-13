@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"math/rand"
 	"time"
+	"math/big"
+	"math"
 )
 
 type Eth struct {
@@ -120,46 +122,52 @@ func (rpc *Eth) GetTransactions(height uint) ([]entities.Deposit, error) {
 
 		return itfc.(string), nil
 	}
-	uint64Prop := func(tx map[string]interface {}, key string) (uint64, error) {
+	numProp := func(tx map[string]interface {}, key string) (*big.Int, error) {
 		var err error
+		var numTmp = big.NewInt(0)
 		var strTmp string
 		if strTmp, err = strProp(tx, key); err != nil {
-			return 0, err
+			return numTmp, err
+		}
+		if strTmp[:2] == "0x" {
+			strTmp = strTmp[2:]
 		}
 
-		var numTmp uint64
-		if numTmp, err = strconv.ParseUint(strTmp, 16, 64); err != nil {
+		if numTmp, ok = numTmp.SetString(strTmp, 16); !ok {
+			err = errors.New(fmt.Sprintf("Cant convert to number: %s", strTmp))
 			log.Println(err)
-			return 0, err
+			return numTmp, err
 		}
-
 		return numTmp, nil
 	}
-	txs := txsObj.([]map[string]interface {})
+	txs := txsObj.([]interface {})
 	deposits := []entities.Deposit {}
 	for i, tx := range txs {
+		rawTx := tx.(map[string]interface {})
 		deposit := entities.Deposit {}
 		deposit.Asset	= "ETH"
 		deposit.TxIndex	= i
-		var height64 uint64
-		if height64, err = uint64Prop(tx, "blockNumber"); err != nil {
+		var heightBint *big.Int
+		if heightBint, err = numProp(rawTx, "blockNumber"); err != nil {
 			continue
 		}
-		deposit.Height = uint(height64)
-		var timestamp64 uint64
-		if timestamp64, err = uint64Prop(tx, "timestamp"); err != nil {
+		deposit.Height = heightBint.Uint64()
+		var timestampBint *big.Int
+		if timestampBint, err = numProp(respData, "timestamp"); err != nil {
 			continue
 		}
-		deposit.CreateTime = time.Unix(int64(timestamp64), 0)
-		var value64 uint64
-		if value64, err = uint64Prop(tx, "value"); err != nil {
+		deposit.CreateTime = time.Unix(timestampBint.Int64(), 0)
+		var valueBint *big.Int
+		if valueBint, err = numProp(rawTx, "value"); err != nil {
 			continue
 		}
-		deposit.Amount = float64(value64) / float64(rpc.decimal)
-		if deposit.TxHash, err = strProp(tx, "hash"); err != nil {
+		var amountBflt = big.NewFloat(0)
+		amountBflt.SetInt(valueBint.Div(valueBint, big.NewInt(int64(math.Pow10(rpc.decimal)))))
+		deposit.Amount, _ = amountBflt.Float64()
+		if deposit.TxHash, err = strProp(rawTx, "hash"); err != nil {
 			continue
 		}
-		if deposit.Address, err = strProp(tx, "to"); err != nil {
+		if deposit.Address, err = strProp(rawTx, "to"); err != nil {
 			deposit.Address = "create contract"
 		}
 		deposits = append(deposits, deposit)

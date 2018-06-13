@@ -38,15 +38,23 @@ func (dao *DepositDao) AddScannedDeposit(deposit entities.Deposit) (int64, error
 	var result sql.Result
 	var insertSQL string
 	var ok bool
-	if insertSQL, ok = dao.sqls["AddScannedDeposit"]; ok {
-		if result, err = db.Exec(insertSQL,
+	var useSQL = "AddScannedDeposit"
+	if deposit.CreateTime.Year() > 1000 {
+		useSQL = "AddDepositWithTime"
+	}
+	if insertSQL, ok = dao.sqls[useSQL]; ok {
+		var params = []interface {} {
 			deposit.TxHash,
 			deposit.Address,
 			deposit.Amount,
 			deposit.Asset,
 			deposit.Height,
 			deposit.TxIndex,
-		); err != nil {
+		}
+		if useSQL == "AddDepositWithTime" {
+			params = append(params, deposit.CreateTime)
+		}
+		if result, err = db.Exec(insertSQL, params...); err != nil {
 			log.Println(err)
 			return 0, err
 		}

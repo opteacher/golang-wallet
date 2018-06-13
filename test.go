@@ -14,6 +14,7 @@ import (
 	"dao"
 	"entities"
 	"rpcs"
+	"reflect"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -46,7 +47,7 @@ func testChannelByOK() {
 const DBUrl			= ""
 const DBName		= "test"
 const DBUserName	= "root"
-const DBPassword	= "59524148chenOP"
+const DBPassword	= "12345"
 
 const DropTable		= "DROP TABLE IF EXISTS user"
 const CreateTable	= `CREATE TABLE IF NOT EXISTS user (
@@ -97,6 +98,8 @@ func (o *TestObs) AfterTurn(s *utils.Status, srcStt int) {
 
 func main() {
 	fmt.Println("abcd")
+	var t float64 = 58500000000000000000
+	log.Println(reflect.TypeOf(t).Name())
 
 	// Request from blockchain
 	reqBody := ReqBody { "eth_blockNumber", []string {}, "latest" }
@@ -268,14 +271,19 @@ func main() {
 	deposit.TxIndex	= 0
 	deposit.Height	= 200000
 	deposit.Asset	= "ETH"
-	affectedRows[0], err = depositDAO.AddScannedDeposit(deposit)
-	if err != nil {
+	if affectedRows[0], err = depositDAO.AddScannedDeposit(deposit); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Add deposit succeed: %d\n", affectedRows[0])
 
 	//Test RPC
-	for i := 0; err == nil; i++ {
-		_, err = rpcs.GetEth().GetTransactions(uint(i))
+	var txs []entities.Deposit
+	txs, err = rpcs.GetEth().GetTransactions(120)
+	for i, tx := range txs {
+		if affectedRows[i], err = depositDAO.AddScannedDeposit(tx); err != nil {
+			log.Fatal(err)
+		}
+		affectedRows[0] += affectedRows[i]
 	}
+	log.Printf("Add deposits succeed: %d\n", affectedRows[0])
 }
