@@ -1,6 +1,26 @@
 {
+	"level": {
+		"0": "错误",
+		"1": "警告",
+		"2": "消息",
+		"3": "测试"
+	},
 	"errors": {
+		"E0010": "数据库连接失败：%v",
+		"E0011": "无法找到指定的SQL语句：%v",
+		"E0012": "数据库表插入错误：%v",
+		"E0013": "数据库表查询错误：%v",
+		"E0014": "扫描数据库查询结果集错误：%v",
 		"E1500": "Cant find block with this height",
 		"E1487": "Error block chain response: no transactions in block"
+	},
+	"warnings": {
+
+	},
+	"information": {
+		"I0": "这是一条测试信息"
+	},
+	"debugs": {
+		"D0": "Debug一下：%v"
 	}
 }

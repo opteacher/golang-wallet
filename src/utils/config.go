@@ -28,11 +28,33 @@ type coinSetting struct {
 	Stable int	`json:stable`
 }
 
+type msgsSetting struct {
+	Level map[string]string			`json:level`
+	Errors map[string]string		`json:errors`
+	Warnings map[string]string		`json:warnings`
+	Information map[string]string	`json:information`
+	Debugs map[string]string		`json:debugs`
+}
+
 type Config struct {
 	sync.Once
 	base baseSetting
 	subs subsSetting
 	coin coinSetting
+	msgs msgsSetting
+}
+
+var _self *Config
+
+func GetConfig() *Config {
+	if _self == nil {
+		_self = new(Config)
+		_self.Once = sync.Once {}
+		_self.Once.Do(func() {
+			_self.create()
+		})
+	}
+	return _self
 }
 
 func (cfg *Config) create() error {
@@ -44,6 +66,9 @@ func (cfg *Config) create() error {
 		panic(err)
 	}
 	if err = cfg.loadJson("coin", &cfg.coin); err != nil {
+		panic(err)
+	}
+	if err = cfg.loadJson("message", &cfg.msgs); err != nil {
 		panic(err)
 	}
 	return nil
@@ -89,15 +114,6 @@ func (cfg *Config) GetCoinSettings() coinSetting {
 	return cfg.coin
 }
 
-var _self *Config
-
-func GetConfig() *Config {
-	if _self == nil {
-		_self = new(Config)
-		_self.Once = sync.Once {}
-		_self.Once.Do(func() {
-			_self.create()
-		})
-	}
-	return _self
+func (cfg *Config) GetMsgsSettings() msgsSetting {
+	return cfg.msgs
 }

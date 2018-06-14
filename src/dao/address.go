@@ -4,8 +4,8 @@ import (
 	"sync"
 	"databases"
 	"log"
-	"errors"
 	"database/sql"
+	"utils"
 )
 
 type AddressDao struct {
@@ -30,8 +30,7 @@ func (dao *AddressDao) newAddress(asset string, address string, inuse bool) (int
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0010, err)
 	}
 
 	var result sql.Result
@@ -43,13 +42,10 @@ func (dao *AddressDao) newAddress(asset string, address string, inuse bool) (int
 	}
 	if insertSQL, ok = dao.sqls[useSQL]; ok {
 		if result, err = db.Exec(insertSQL, asset, address); err != nil {
-			log.Println(err)
-			return 0, err
+			return 0, utils.LogIdxEx(utils.ERROR, 0012, err)
 		}
 	} else {
-		err = errors.New("Cant find insert [address] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, useSQL)
 	}
 	return result.RowsAffected()
 }
@@ -66,22 +62,18 @@ func (dao *AddressDao) FindInuseByAsset(asset string) ([]string, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Println(err)
-		return nil, err
+		return nil, utils.LogIdxEx(utils.ERROR, 0010, err)
 	}
 
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = dao.sqls["FindByAsset"]; !ok {
-		err = errors.New("Cant find insert [address] table SQL")
-		log.Println(err)
-		return []string {}, err
+		return []string {}, utils.LogIdxEx(utils.ERROR, 0012, err)
 	}
 
 	var rows *sql.Rows
 	if rows, err = db.Query(selectSQL, asset); err != nil {
-		log.Println(err)
-		return nil, err
+		return nil, utils.LogIdxEx(utils.ERROR, 0013, err)
 	}
 	defer rows.Close()
 
@@ -89,7 +81,7 @@ func (dao *AddressDao) FindInuseByAsset(asset string) ([]string, error) {
 	for rows.Next() {
 		var address string
 		if err = rows.Scan(&address); err != nil {
-			log.Println(err)
+			utils.LogIdxEx(utils.ERROR, 0014, err)
 			continue
 		}
 		addresses = append(addresses, address)
