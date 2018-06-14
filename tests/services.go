@@ -10,11 +10,17 @@ func main() {
 	log.SetFlags(log.Lshortfile)
 
 	//Test service
-	service := services.GetDepositService()
-	service.Init()
-	service.Start()
+	depositService := services.GetDepositService()
+	notifyService := services.GetNotifyService()
+	depositService.Init()
+	notifyService.Init()
+
+	depositService.Start()
+	notifyService.Start()
 
 	time.Sleep(20 * time.Second)
 
-	service.Stop()
+	depositService.Stop()
+	notifyService.Stop()
+	for !depositService.IsDestroy() && !notifyService.IsDestroy() {}
 }

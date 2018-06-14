@@ -4,20 +4,20 @@ import (
 	"sync"
 	"database/sql"
 	"databases"
-	"log"
 	"errors"
+	"utils"
 )
 
-type HeightDao struct {
+type heightDao struct {
 	baseDao
 	sync.Once
 }
 
-var _heightDao *HeightDao
+var _heightDao *heightDao
 
-func GetHeightDAO() *HeightDao {
+func GetHeightDAO() *heightDao {
 	if _heightDao == nil {
-		_heightDao = new(HeightDao)
+		_heightDao = new(heightDao)
 		_heightDao.Once = sync.Once {}
 		_heightDao.Once.Do(func() {
 			_heightDao.create("height")
@@ -26,33 +26,29 @@ func GetHeightDAO() *HeightDao {
 	return _heightDao
 }
 
-func (dao *HeightDao) ChkOrAddAsset(asset string) (int64, error) {
+func (dao *heightDao) ChkOrAddAsset(asset string) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
 	}
 
 	var checkSQL string
 	var ok bool
 	if checkSQL, ok = dao.sqls["ChkExsAsset"]; !ok {
-		err = errors.New("Cant find insert [height] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("ChkExsAsset"))
 	}
 
 	var rows *sql.Rows
 	if rows, err = db.Query(checkSQL, asset); err != nil {
-		log.Println(err)
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
 	}
 	defer rows.Close()
 
 	var num int
 	if rows.Next() {
 		if err = rows.Scan(&num); err != nil {
-			log.Println(err)
-			return 0, err
+			return 0, utils.LogIdxEx(utils.ERROR, 0014, err)
 		}
 	}
 
@@ -62,76 +58,66 @@ func (dao *HeightDao) ChkOrAddAsset(asset string) (int64, error) {
 
 	var insertSQL string
 	if insertSQL, ok = dao.sqls["AddAsset"]; !ok {
-		err = errors.New("Cant find insert [height] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("AddAsset"))
 	}
 
 	var result sql.Result
 	if result, err = db.Exec(insertSQL, asset); err != nil {
-		log.Println(err)
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
 	}
 	return result.RowsAffected()
 }
 
-func (dao *HeightDao) GetHeight(asset string) (uint64, error) {
+func (dao *heightDao) GetHeight(asset string) (uint64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
 	}
 
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = dao.sqls["GetHeight"]; !ok {
-		err = errors.New("Cant find insert [height] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("GetHeight"))
 	}
 
 	var rows *sql.Rows
 	if rows, err = db.Query(selectSQL, asset); err != nil {
-		log.Println(err)
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
 	}
 	defer rows.Close()
 
 	var height uint64
 	if rows.Next() {
 		if err = rows.Scan(&height); err != nil {
-			return 0, err
+			return 0, utils.LogIdxEx(utils.ERROR, 0014, err)
 		} else {
 			return height, nil
 		}
 	}
 
 	if err = rows.Err(); err != nil {
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0014, err))
 	}
-	err = errors.New("Cant find identified asset")
-	return 0, nil
+	return 0, utils.LogMsgEx(utils.WARNING, "无法找到指定币种的高度：%s", asset)
 }
 
-func (dao *HeightDao) UpdateHeight(asset string, height uint64) (int64, error) {
+func (dao *heightDao) UpdateHeight(asset string, height uint64) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
 	}
 
 	var updateSQL string
 	var ok bool
 	if updateSQL, ok = dao.sqls["UpdateHeight"]; !ok {
-		err = errors.New("Cant find update [height] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("UpdateHeight"))
 	}
 
 	var result sql.Result
 	if result, err = db.Exec(updateSQL, height, asset); err != nil {
-		log.Println(err)
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0021, err))
 	}
 	return result.RowsAffected()
 }

@@ -5,7 +5,6 @@ import (
 	"utils"
 	"entities"
 	"encoding/json"
-	"log"
 	"bytes"
 	"net/http"
 	"io/ioutil"
@@ -18,7 +17,7 @@ import (
 	"math"
 )
 
-type Eth struct {
+type eth struct {
 	sync.Once
 	coinName string
 	callUrl string
@@ -26,11 +25,11 @@ type Eth struct {
 	Stable int
 }
 
-var __eth *Eth
+var __eth *eth
 
-func GetEth() *Eth {
+func GetEth() *eth {
 	if __eth == nil {
-		__eth = new(Eth)
+		__eth = new(eth)
 		__eth.Once = sync.Once {}
 		__eth.Once.Do(func() {
 			__eth.create()
@@ -39,7 +38,7 @@ func GetEth() *Eth {
 	return __eth
 }
 
-func (rpc *Eth) create() {
+func (rpc *eth) create() {
 	setting := utils.GetConfig().GetCoinSettings()
 	rpc.coinName 	= setting.Name
 	rpc.callUrl		= setting.Url
@@ -62,38 +61,40 @@ type EthFailedResp struct {
 	}					`json:error`
 }
 
-func (rpc *Eth) sendRequest(method string, params []interface {}, id string) (EthSucceedResp, error)  {
+func (rpc *eth) sendRequest(method string, params []interface {}, id string) (EthSucceedResp, error)  {
 	reqBody := RequestBody { method, params, id }
 	reqStr, err := json.Marshal(reqBody)
 	if err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0022, err))
 	}
-	log.Println(fmt.Sprintf("Request body: %s", reqStr))
+	utils.LogMsgEx(utils.DEBUG, fmt.Sprintf("Request body: %s", reqStr), nil)
 
 	reqBuf := bytes.NewBuffer([]byte(reqStr))
 	res, err := http.Post(rpc.callUrl, "application/json", reqBuf)
+	if err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0024, err))
+	}
 	defer res.Body.Close()
 
 	bodyStr, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0025, err))
 	}
-	log.Println(fmt.Sprintf("Response body: %s", bodyStr))
+	utils.LogMsgEx(utils.DEBUG, fmt.Sprintf("Response body: %s", bodyStr), nil)
 
 	var resBody EthSucceedResp
 	if err = json.Unmarshal(bodyStr, &resBody); err != nil {
 		var resError EthFailedResp
 		if err = json.Unmarshal(bodyStr, &resError); err != nil {
-			log.Fatal(err)
+			panic(utils.LogIdxEx(utils.ERROR, 0023, err))
 		} else {
-			log.Println(resError.Error)
-			return resBody, errors.New(resError.Error.Message)
+			return resBody, utils.LogIdxEx(utils.ERROR, 0026, errors.New(resError.Error.Message))
 		}
 	}
 	return resBody, nil
 }
 
-func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error) {
+func (rpc *eth) GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error) {
 	var err error
 	// 发送请求获取指定高度的块
 	var resp EthSucceedResp
@@ -101,23 +102,18 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 	id := fmt.Sprintf("%d", rand.Intn(1000))
 	params := []interface{} { "0x" + strconv.FormatUint(uint64(height), 16), true }
 	if resp, err = rpc.sendRequest("eth_getBlockByNumber", params, id); err != nil {
-		log.Println(err)
-		return nil, err
+		return nil, utils.LogIdxEx(utils.ERROR, 0026, err)
 	}
 
 	// 解析返回数据，提取交易
 	if resp.Result == nil {
-		err = errors.New("E1500")
-		log.Println(err)
-		return []entities.BaseDeposit {}, err
+		return []entities.BaseDeposit {}, utils.LogMsgEx(utils.ERROR, "找不到指定块高的块：%d", height)
 	}
 	respData := resp.Result.(map[string]interface {})
 	var txsObj interface {}
 	var ok bool
 	if txsObj, ok = respData["transactions"]; !ok {
-		err = errors.New("E1487")
-		log.Println(err)
-		return nil, err
+		return nil, utils.LogIdxEx(utils.WARNING, 0001, nil)
 	}
 
 	// 定义提取属性的方法
@@ -125,9 +121,7 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		var itfc interface {}
 
 		if itfc, ok = tx[key]; !ok {
-			msg := fmt.Sprintf("Transaction has no %s\n", key)
-			log.Printf(msg)
-			return "", errors.New(msg)
+			return "", utils.LogMsgEx(utils.ERROR, "交易未包含所需字段：%s", key)
 		}
 
 		return itfc.(string), nil
@@ -144,9 +138,7 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		}
 
 		if numTmp, ok = numTmp.SetString(strTmp, 16); !ok {
-			err = errors.New(fmt.Sprintf("Cant convert to number: %s", strTmp))
-			log.Println(err)
-			return numTmp, err
+			return numTmp, utils.LogIdxEx(utils.ERROR, 29, strTmp)
 		}
 		return numTmp, nil
 	}
@@ -192,14 +184,13 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 	return deposits, nil
 }
 
-func (rpc *Eth) GetCurrentHeight() (uint64, error) {
+func (rpc *eth) GetCurrentHeight() (uint64, error) {
 	var err error
 	var resp EthSucceedResp
 	rand.Seed(time.Now().Unix())
 	id := fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("eth_blockNumber", []interface{} {}, id); err != nil {
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0026, err)
 	}
 	strHeight := resp.Result.(string)
 	if strHeight[0:2] == "0x" {

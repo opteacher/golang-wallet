@@ -4,22 +4,22 @@ import (
 	"sync"
 	"database/sql"
 	"databases"
-	"log"
 	"errors"
 	"entities"
 	"time"
+	"utils"
 )
 
-type DepositDao struct {
+type depositDao struct {
 	baseDao
 	sync.Once
 }
 
-var _depositDao *DepositDao
+var _depositDao *depositDao
 
-func GetDepositDAO() *DepositDao {
+func GetDepositDAO() *depositDao {
 	if _depositDao == nil {
-		_depositDao = new(DepositDao)
+		_depositDao = new(depositDao)
 		_depositDao.Once = sync.Once {}
 		_depositDao.Once.Do(func() {
 			_depositDao.create("deposit")
@@ -28,11 +28,11 @@ func GetDepositDAO() *DepositDao {
 	return _depositDao
 }
 
-func (dao *DepositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, error) {
+func (dao *depositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
 	}
 
 	var result sql.Result
@@ -43,9 +43,7 @@ func (dao *DepositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, 
 		useSQL = "AddDepositWithTime"
 	}
 	if insertSQL, ok = dao.sqls[useSQL]; !ok {
-		err = errors.New("Cant find insert [deposit] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New(useSQL))
 	}
 
 	var params = []interface {} {
@@ -60,28 +58,25 @@ func (dao *DepositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, 
 		params = append(params, deposit.CreateTime)
 	}
 	if result, err = db.Exec(insertSQL, params...); err != nil {
-		log.Println(err)
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
 	}
 	return result.RowsAffected()
 }
 
-func (dao *DepositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, error) {
+func (dao *depositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
 	}
 
 	var insertSQL string
 	var ok bool
-	if deposit.CreateTime.Year() > 1000 {
+	if deposit.CreateTime.Year() < 1000 {
 		deposit.CreateTime = time.Now()
 	}
 	if insertSQL, ok = dao.sqls["AddStableDeposit"]; !ok {
-		err = errors.New("Cant find insert [deposit] table SQL")
-		log.Println(err)
-		return 0, err
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("AddStableDeposit"))
 	}
 
 	var params = []interface {} {
@@ -92,73 +87,56 @@ func (dao *DepositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, e
 		deposit.Height,
 		deposit.TxIndex,
 		deposit.CreateTime,
-		deposit.CreateTime,
 	}
 	var result sql.Result
 	if result, err = db.Exec(insertSQL, params...); err != nil {
-		log.Println(err)
-		return 0, err
+		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
 	}
 	return result.RowsAffected()
 }
 
-func (dao *DepositDao) GetUnstableDeposit(asset string) ([]entities.TotalDeposit, error) {
+func (dao *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		log.Fatal(err)
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
 	}
 
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = dao.sqls["GetUnstableDeposit"]; !ok {
-		err = errors.New("Cant find select [deposit] table SQL")
-		log.Println(err)
-		return []entities.TotalDeposit {}, err
+		return nil, utils.LogIdxEx(utils.ERROR, 0011, errors.New("GetUnstableDeposit"))
 	}
 
 	var rows *sql.Rows
 	if rows, err = db.Query(selectSQL, asset); err != nil {
-		log.Println(err)
-		return []entities.TotalDeposit {}, err
+		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
 	}
 	defer rows.Close()
 
-	deposits := []entities.TotalDeposit {}
+	deposits := []entities.BaseDeposit {}
 	for rows.Next() {
-		var deposit entities.TotalDeposit
-		var createTime = new(time.Time)
-		var updateTime = new(time.Time)
+		var deposit entities.BaseDeposit
 		if err = rows.Scan([]interface {} {
-			&deposit.Id,
 			&deposit.TxHash,
 			&deposit.Address,
 			&deposit.Amount,
 			&deposit.Asset,
 			&deposit.Height,
 			&deposit.TxIndex,
-			&deposit.Status,
-			createTime,
-			updateTime,
 		}...); err != nil {
-			log.Println(err)
+			utils.LogIdxEx(utils.ERROR, 0014, err)
 			continue
-		}
-		if createTime != nil {
-			deposit.CreateTime = *createTime
-		}
-		if updateTime != nil {
-			deposit.UpdateTime = *updateTime
 		}
 		deposits = append(deposits, deposit)
 	}
 
 	if err = rows.Err(); err != nil {
-		return []entities.TotalDeposit {}, err
+		panic(utils.LogIdxEx(utils.ERROR, 0014, err))
 	}
 	return deposits, nil
 }
 
-func (dao *DepositDao) DepositIntoStable(txHash string) (int64, error) {
+func (dao *depositDao) DepositIntoStable(txHash string) (int64, error) {
 	return 0, nil
 }

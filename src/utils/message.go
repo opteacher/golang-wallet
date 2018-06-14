@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"reflect"
 	"errors"
 )
 
@@ -18,19 +19,14 @@ var levels = map[int]string {
 	ERROR: "E", WARNING: "W", INFO: "I", DEBUG: "D",
 }
 
-var enableDebugLog = false
-func EnableDebugLog(enable bool) {
-	enableDebugLog = enable
-}
-
 func LogIdxEx(level int, id int, detail interface {}) error {
-	if !enableDebugLog && level == DEBUG {
-		return detail.(error)
+	msgSet := GetConfig().GetMsgsSettings()
+	if !msgSet.Logs.Debug && level == DEBUG {
+		return procsDetail(detail)
 	}
 
 	log.SetFlags(log.Lshortfile)
 
-	msgSet := GetConfig().GetMsgsSettings()
 	var msgs = map[string]string {}
 	var prefix string
 	switch level {
@@ -48,16 +44,17 @@ func LogIdxEx(level int, id int, detail interface {}) error {
 		prefix = "D"
 	}
 
-	if msg, ok := msgs[prefix + strconv.Itoa(id)]; ok {
-		return LogMsgEx(level, msg, detail)
+	if msg, ok := msgs[prefix + fmt.Sprintf("%04d", id)]; ok {
+		return logMsgEx(level, msg, detail)
 	} else {
-		return LogMsgEx(level, "未找到指定的消息信息：%d", id)
+		return logMsgEx(level, "未找到指定的消息信息：%d", id)
 	}
 }
 
-func LogMsgEx(level int, msg string, detail interface {}) error {
-	if !enableDebugLog && level == DEBUG {
-		return detail.(error)
+func logMsgEx(level int, msg string, detail interface {}) error {
+	msgSet := GetConfig().GetMsgsSettings()
+	if !msgSet.Logs.Debug && level == DEBUG {
+		return procsDetail(detail)
 	}
 
 	log.SetFlags(log.Lshortfile)
@@ -71,9 +68,24 @@ func LogMsgEx(level int, msg string, detail interface {}) error {
 	}
 
 	strLevel := GetConfig().GetMsgsSettings().Level[strconv.Itoa(level)]
-	log.Output(0, fmt.Sprintf("[%s] %s\n", strLevel, msg))
-	if level == ERROR {
-		detail = errors.New(msg)
+	log.Output(3, fmt.Sprintf("[%s] %s\n", strLevel, msg))
+	return procsDetail(detail)
+}
+
+func procsDetail(detail interface {}) error {
+	if detail != nil {
+		switch reflect.TypeOf(detail).Name() {
+		case "error":
+			return detail.(error)
+		case "string":
+			return errors.New(detail.(string))
+		default:
+			return nil
+		}
 	}
-	return detail.(error)
+	return nil
+}
+
+func LogMsgEx(level int, msg string, detail interface {}) error {
+	return logMsgEx(level, msg, detail)
 }

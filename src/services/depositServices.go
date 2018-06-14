@@ -2,110 +2,91 @@ package services
 
 import (
 	"utils"
-	"log"
 	"sync"
 	"dao"
 	"entities"
 	"rpcs"
 )
 
-const (
-	DESTORY = iota
-	NONE
-	CREATE
-	INIT
-	START
-	PAUSE
-	STOP
-)
-
-type DepositService struct {
+type depositService struct {
 	sync.Once
 	status utils.Status
 	addresses []string
-	procsDeposits []entities.TotalDeposit
 	height uint64
 }
 
-var _self *DepositService
+var _depositService *depositService
 
-func GetDepositService() *DepositService {
-	if _self == nil {
-		_self = new(DepositService)
-		_self.Once = sync.Once {}
-		_self.Once.Do(func() {
-			_self.create()
+func GetDepositService() *depositService {
+	if _depositService == nil {
+		_depositService = new(depositService)
+		_depositService.Once = sync.Once {}
+		_depositService.Once.Do(func() {
+			_depositService.create()
 		})
 	}
-	return _self
+	return _depositService
 }
 
-func (service *DepositService) create() error {
+func (service *depositService) create() error {
 	service.status.RegAsObs(service)
 	service.status.Init([]int { DESTORY, CREATE, INIT, START })
 	return nil
 }
 
-func (service *DepositService) BeforeTurn(s *utils.Status, tgtStt int) {
+func (service *depositService) BeforeTurn(s *utils.Status, tgtStt int) {
 	var err error
 	switch tgtStt {
 	case INIT:
-		log.Println("initialization")
-		// Load all address
+		utils.LogMsgEx(utils.INFO, "initialization", nil)
+		// 加载所有内部地址
 		if err = service.loadAddresses(); err != nil {
-			log.Fatal(err)
+			panic(utils.LogMsgEx(utils.ERROR, "加载地址失败：%v", err))
 		}
-		// Load all unstable deposits
-		if err = service.loadIncompleteDeposits(); err != nil {
-			log.Fatal(err)
-		}
-		// Get current height
+		// 获取上一次扫描的块高
 		if err = service.getCurrentHeight(); err != nil {
-			log.Fatal(err)
+			panic(utils.LogMsgEx(utils.ERROR, "获取当前块高失败：%v", err))
 		}
 	case START:
-		log.Println("start")
+		utils.LogMsgEx(utils.INFO, "start", nil)
 	}
 }
 
-func (service *DepositService) AfterTurn(s *utils.Status, srcStt int) {
+func (service *depositService) AfterTurn(s *utils.Status, srcStt int) {
 	switch s.Current() {
 	case INIT:
-		log.Println("initialized")
+		utils.LogMsgEx(utils.INFO, "initialized", nil)
 	case START:
-		// Start goroutine to scan block chain
+		// 开启协程扫描区块链上的交易记录
 		go service.startScanChain()
-		log.Println("started")
+		utils.LogMsgEx(utils.INFO, "started", nil)
 	}
 }
 
-func (service *DepositService) Init() {
+func (service *depositService) Init() {
 	service.status.TurnTo(INIT)
 }
 
-func (service *DepositService) Start() {
+func (service *depositService) Start() {
 	service.status.TurnTo(START)
 }
 
-func (service *DepositService) Stop()  {
+func (service *depositService) Stop()  {
 	service.status.TurnTo(STOP)
 }
 
-func (service *DepositService) loadAddresses() error {
+func (service *depositService) IsDestroy() bool {
+	return service.status.Current() == DESTORY
+}
+
+func (service *depositService) loadAddresses() error {
 	coinSetting := utils.GetConfig().GetCoinSettings()
 	var err error
 	service.addresses, err = dao.GetAddressDAO().FindInuseByAsset(coinSetting.Name)
 	return err
 }
 
-func (service *DepositService) loadIncompleteDeposits() error  {
-	coinSetting := utils.GetConfig().GetCoinSettings()
-	var err error
-	service.procsDeposits, err = dao.GetDepositDAO().GetUnstableDeposit(coinSetting.Name)
-	return err
-}
-
-func (service *DepositService) getCurrentHeight() error {
+func (service *depositService) getCurrentHeight() error {
 	coinSetting := utils.GetConfig().GetCoinSettings()
 	var err error
 	service.height, err = dao.GetHeightDAO().GetHeight(coinSetting.Name)
@@ -115,52 +96,56 @@ func (service *DepositService) getCurrentHeight() error {
 	return err
 }
 
-func (service *DepositService) startScanChain() error {
+func (service *depositService) startScanChain() {
 	var err error
 	coinName := utils.GetConfig().GetCoinSettings().Name
 	rpc := rpcs.GetEth()
 	for err == nil && service.status.Current() == START {
-		log.Printf("height: %d\n", service.height)
+		utils.LogMsgEx(utils.INFO, "块高: %d", service.height)
 
 		// 获取指定高度的交易
 		var deposits []entities.BaseDeposit
 		if deposits, err = rpc.GetTransactions(uint(service.height), service.addresses); err != nil {
-			log.Printf("Get transaction failed: %s\n", err)
+			utils.LogMsgEx(utils.ERROR, "获取交易失败：%v", err)
 			continue
 		}
 
 		for _, deposit := range deposits {
+			utils.LogMsgEx(utils.INFO, "发现交易：%v", deposit)
 
 			// 获取当前块高
 			var curHeight uint64
 			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
-				log.Printf("Get current height failed: %s\n", err)
+				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
 				continue
 			}
 
 			// 如果已经达到稳定块高，直接存入数据库
 			// @tobo: 通知后台
 			if deposit.Height + uint64(rpc.Stable) >= curHeight {
-				if err = TxIntoStable(&deposit); err != nil {
+				utils.LogMsgEx(utils.INFO, "交易（%s）进入稳定状态", deposit.TxHash)
+
+				if err = TxIntoStable(&deposit, true); err != nil {
+					utils.LogMsgEx(utils.ERROR, "插入稳定交易记录失败：%v", err)
 					continue
 				}
 			} else {
 				// 未进入稳定状态，抛给通知等待服务
+				toNotifySig <- deposit
 			}
 		}
 
 		// 持久化高度到height表
-		if service.height % 50 == 0 {
+		if service.height % 20 == 0 {
 			if _, err = dao.GetHeightDAO().UpdateHeight(coinName, service.height); err != nil {
-				log.Println("Update height failed: %s\n", err)
+				utils.LogMsgEx(utils.ERROR, "更新块高失败：%v", err)
 				continue
 			}
+			utils.LogMsgEx(utils.INFO, "块高更新到：%d", service.height)
 		}
 
 		service.height++
 	}
-	if service.status.Current() == START {
-		service.status.TurnTo(STOP)
-	}
-	return err
+	close(toNotifySig)
+	service.status.TurnTo(DESTORY)
 }

@@ -29,6 +29,9 @@ type coinSetting struct {
 }
 
 type msgsSetting struct {
+	Logs struct {
+		Debug bool					`json:debug`
+	}								`json:logs`
 	Level map[string]string			`json:level`
 	Errors map[string]string		`json:errors`
 	Warnings map[string]string		`json:warnings`
@@ -36,7 +39,7 @@ type msgsSetting struct {
 	Debugs map[string]string		`json:debugs`
 }
 
-type Config struct {
+type config struct {
 	sync.Once
 	base baseSetting
 	subs subsSetting
@@ -44,20 +47,20 @@ type Config struct {
 	msgs msgsSetting
 }
 
-var _self *Config
+var _config *config
 
-func GetConfig() *Config {
-	if _self == nil {
-		_self = new(Config)
-		_self.Once = sync.Once {}
-		_self.Once.Do(func() {
-			_self.create()
+func GetConfig() *config {
+	if _config == nil {
+		_config = new(config)
+		_config.Once = sync.Once {}
+		_config.Once.Do(func() {
+			_config.create()
 		})
 	}
-	return _self
+	return _config
 }
 
-func (cfg *Config) create() error {
+func (cfg *config) create() error {
 	var err error
 	if err = cfg.loadJson("settings", &cfg.base); err != nil {
 		panic(err)
@@ -74,7 +77,7 @@ func (cfg *Config) create() error {
 	return nil
 }
 
-func (cfg *Config) loadJson(fileName string, data interface {}) error {
+func (cfg *config) loadJson(fileName string, data interface {}) error {
 	file, err := os.Open(fmt.Sprintf("config/%s.json", fileName))
 	if err != nil {
 		log.Fatal(err)
@@ -102,18 +105,18 @@ func (cfg *Config) loadJson(fileName string, data interface {}) error {
 	return nil
 }
 
-func (cfg *Config) GetBaseSettings() baseSetting {
+func (cfg *config) GetBaseSettings() baseSetting {
 	return cfg.base
 }
 
-func (cfg *Config) GetSubsSettings() subsSetting  {
+func (cfg *config) GetSubsSettings() subsSetting  {
 	return cfg.subs
 }
 
-func (cfg *Config) GetCoinSettings() coinSetting {
+func (cfg *config) GetCoinSettings() coinSetting {
 	return cfg.coin
 }
 
-func (cfg *Config) GetMsgsSettings() msgsSetting {
+func (cfg *config) GetMsgsSettings() msgsSetting {
 	return cfg.msgs
 }
