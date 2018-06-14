@@ -1,0 +1,6 @@
+{
+	"errors": {
+		"E1500": "Cant find block with this height",
+		"E1487": "Error block chain response: no transactions in block"
+	}
+}

@@ -121,19 +121,18 @@ func (service *DepositService) startScanChain() error {
 	coinName := utils.GetConfig().GetCoinSettings().Name
 	rpc := rpcs.GetEth()
 	depositDao := dao.GetDepositDAO()
-	for ; err == nil && service.status.Current() == START; service.height++ {
-		log.Printf("height: %d\n", service.height)
-
+	for err == nil && service.status.Current() == START {
 		// 获取当前块高
 		var curHeight uint64
 		if curHeight, err = rpc.GetCurrentHeight(); err != nil {
 			log.Printf("Get current height failed: %s\n", err)
 			continue
 		}
-		// 已经达到最高快高
+		// 已经达到最高快高，同时获取不到块信息了
 		if service.height >= curHeight {
 			continue
 		}
+		log.Printf("height: %d\n", service.height)
 
 		// 获取指定高度的交易
 		var deposits []entities.BaseDeposit
@@ -162,6 +161,8 @@ func (service *DepositService) startScanChain() error {
 				continue
 			}
 		}
+
+		service.height++
 	}
 	service.status.TurnTo(STOP)
 	return err

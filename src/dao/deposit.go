@@ -127,6 +127,8 @@ func (dao *DepositDao) GetUnstableDeposit(asset string) ([]entities.TotalDeposit
 	deposits := []entities.TotalDeposit {}
 	for rows.Next() {
 		var deposit entities.TotalDeposit
+		var createTime = new(time.Time)
+		var updateTime = new(time.Time)
 		if err = rows.Scan([]interface {} {
 			&deposit.Id,
 			&deposit.TxHash,
@@ -136,10 +138,17 @@ func (dao *DepositDao) GetUnstableDeposit(asset string) ([]entities.TotalDeposit
 			&deposit.Height,
 			&deposit.TxIndex,
 			&deposit.Status,
-			&deposit.CreateTime,
-			&deposit.UpdateTime,
+			createTime,
+			updateTime,
 		}...); err != nil {
 			log.Println(err)
+			continue
+		}
+		if createTime != nil {
+			deposit.CreateTime = *createTime
+		}
+		if updateTime != nil {
+			deposit.UpdateTime = *updateTime
 		}
 		deposits = append(deposits, deposit)
 	}

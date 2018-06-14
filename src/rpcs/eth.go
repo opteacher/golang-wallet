@@ -106,11 +106,16 @@ func (rpc *Eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 	}
 
 	// 解析返回数据，提取交易
+	if resp.Result == nil {
+		err = errors.New("E1500")
+		log.Println(err)
+		return []entities.BaseDeposit {}, err
+	}
 	respData := resp.Result.(map[string]interface {})
 	var txsObj interface {}
 	var ok bool
 	if txsObj, ok = respData["transactions"]; !ok {
-		err = errors.New("Error block chain response: no transactions in block")
+		err = errors.New("E1487")
 		log.Println(err)
 		return nil, err
 	}

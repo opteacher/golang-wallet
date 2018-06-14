@@ -11,11 +11,9 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"utils"
-	"dao"
-	"entities"
-	"rpcs"
 	"reflect"
 	"services"
+	"rpcs"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -254,46 +252,48 @@ func main() {
 		log.Println(err)
 	}
 
-	var totalAffectRows int64
-	var tempAffectRows int64
-
 	//Test config
 	config := utils.GetConfig()
 	log.Println(config.GetBaseSettings())
 	log.Println(config.GetSubsSettings())
 
-	//Test DB
-	addressDAO := dao.GetAddressDAO()
-	addressDAO.NewAddress("ETH", "0xabcd")
-	addressDAO.NewAddressInuse("BTC", "0x1234")
-	log.Println(addressDAO.FindInuseByAsset("BTC"))
+	//var totalAffectRows int64
+	//var tempAffectRows int64
 
-	depositDAO := dao.GetDepositDAO()
-	var deposit entities.BaseDeposit
-	deposit.TxHash	= "0x12345"
-	deposit.Address	= "0xabcd"
-	deposit.Amount	= 1000
-	deposit.TxIndex	= 0
-	deposit.Height	= 200000
-	deposit.Asset	= "ETH"
-	if totalAffectRows, err = depositDAO.AddScannedDeposit(deposit); err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Add deposit succeed: %d\n", totalAffectRows)
+	//Test DAO
+	//addressDAO := dao.GetAddressDAO()
+	//addressDAO.NewAddress("ETH", "0xabcd")
+	//addressDAO.NewAddressInuse("BTC", "0x1234")
+	//log.Println(addressDAO.FindInuseByAsset("BTC"))
+	//
+	//depositDAO := dao.GetDepositDAO()
+	//var deposit entities.BaseDeposit
+	//deposit.TxHash	= "0x12345"
+	//deposit.Address	= "0xabcd"
+	//deposit.Amount	= 1000
+	//deposit.TxIndex	= 0
+	//deposit.Height	= 200000
+	//deposit.Asset	= "ETH"
+	//if totalAffectRows, err = depositDAO.AddScannedDeposit(deposit); err != nil {
+	//	log.Fatal(err)
+	//}
+	//log.Printf("Add deposit succeed: %d\n", totalAffectRows)
 
 	//Test RPC
-	var txs []entities.BaseDeposit
-	txs, err = rpcs.GetEth().GetTransactions(120, []string {
-		"0x43faead79328ca23fbb179af73ab8c0153ed990c",
-	})
-	totalAffectRows = 0
-	for _, tx := range txs {
-		if tempAffectRows, err = depositDAO.AddScannedDeposit(tx); err != nil {
-			log.Fatal(err)
-		}
-		totalAffectRows += tempAffectRows
-	}
-	log.Printf("Add deposits succeed: %d\n", totalAffectRows)
+	//var txs []entities.BaseDeposit
+	//txs, err = rpcs.GetEth().GetTransactions(120, []string {
+	//	"0x43faead79328ca23fbb179af73ab8c0153ed990c",
+	//})
+	//totalAffectRows = 0
+	//for _, tx := range txs {
+	//	if tempAffectRows, err = depositDAO.AddScannedDeposit(tx); err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	totalAffectRows += tempAffectRows
+	//}
+	//log.Printf("Add deposits succeed: %d\n", totalAffectRows)
+
+	rpcs.GetEth().GetTransactions(20000, []string {})
 
 	//Test service
 	services.GetDepositService().Init()
