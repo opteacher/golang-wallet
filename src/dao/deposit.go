@@ -28,7 +28,7 @@ func GetDepositDAO() *DepositDao {
 	return _depositDao
 }
 
-func (dao *DepositDao) AddScannedDeposit(deposit entities.BaseDeposit) (int64, error) {
+func (dao *DepositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
@@ -66,7 +66,7 @@ func (dao *DepositDao) AddScannedDeposit(deposit entities.BaseDeposit) (int64, e
 	return result.RowsAffected()
 }
 
-func (dao *DepositDao) AddStableDeposit(deposit entities.BaseDeposit) (int64, error) {
+func (dao *DepositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {

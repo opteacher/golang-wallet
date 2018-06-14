@@ -20,7 +20,7 @@ INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index) VALUES (
 INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index, create_time) VALUES (?, ?, ?, ?, ?, ?, ?)
 
 # AddStableDeposit
-INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index, create_time, update_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, 2)
+INSERT INTO deposit (tx_hash, address, amount, asset, height, tx_index, create_time, update_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 2)
 
 # GetUnstableDeposit
 SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM deposit WHERE asset=? AND status<2

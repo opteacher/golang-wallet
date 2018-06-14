@@ -69,27 +69,26 @@ func (service *DepositService) BeforeTurn(s *utils.Status, tgtStt int) {
 }
 
 func (service *DepositService) AfterTurn(s *utils.Status, srcStt int) {
-	var err error
 	switch s.Current() {
 	case INIT:
 		log.Println("initialized")
 	case START:
-		log.Println("started")
 		// Start goroutine to scan block chain
-		if err = service.startScanChain(); err != nil {
-			log.Fatal(err)
-		}
+		go service.startScanChain()
+		log.Println("started")
 	}
 }
 
-func (service *DepositService) Init() error {
+func (service *DepositService) Init() {
 	service.status.TurnTo(INIT)
-	return nil
 }
 
-func (service *DepositService) Start() error {
+func (service *DepositService) Start() {
 	service.status.TurnTo(START)
-	return nil
+}
+
+func (service *DepositService) Stop()  {
+	service.status.TurnTo(STOP)
 }
 
 func (service *DepositService) loadAddresses() error {
@@ -120,18 +119,7 @@ func (service *DepositService) startScanChain() error {
 	var err error
 	coinName := utils.GetConfig().GetCoinSettings().Name
 	rpc := rpcs.GetEth()
-	depositDao := dao.GetDepositDAO()
 	for err == nil && service.status.Current() == START {
-		// 获取当前块高
-		var curHeight uint64
-		if curHeight, err = rpc.GetCurrentHeight(); err != nil {
-			log.Printf("Get current height failed: %s\n", err)
-			continue
-		}
-		// 已经达到最高快高，同时获取不到块信息了
-		if service.height >= curHeight {
-			continue
-		}
 		log.Printf("height: %d\n", service.height)
 
 		// 获取指定高度的交易
@@ -142,11 +130,18 @@ func (service *DepositService) startScanChain() error {
 		}
 
 		for _, deposit := range deposits {
+
+			// 获取当前块高
+			var curHeight uint64
+			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
+				log.Printf("Get current height failed: %s\n", err)
+				continue
+			}
+
 			// 如果已经达到稳定块高，直接存入数据库
 			// @tobo: 通知后台
 			if deposit.Height + uint64(rpc.Stable) >= curHeight {
-				if _, err = depositDao.AddStableDeposit(deposit); err != nil {
-					log.Printf("Add deposit failed: %s\n", err)
+				if err = TxIntoStable(&deposit); err != nil {
 					continue
 				}
 			} else {
@@ -164,6 +159,8 @@ func (service *DepositService) startScanChain() error {
 
 		service.height++
 	}
-	service.status.TurnTo(STOP)
+	if service.status.Current() == START {
+		service.status.TurnTo(STOP)
+	}
 	return err
 }
