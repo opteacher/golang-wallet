@@ -27,7 +27,7 @@ type eth struct {
 
 var __eth *eth
 
-func GetEth() *eth {
+func (r *rpc) ETH() *eth {
 	if __eth == nil {
 		__eth = new(eth)
 		__eth.Once = sync.Once {}

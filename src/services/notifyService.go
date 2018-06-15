@@ -87,16 +87,17 @@ func (service *notifyService) startWaitForStable() {
 	var err error
 	for err == nil && service.status.Current() == START {
 		//如果达到协程上限，则等待
+		coinSet := utils.GetConfig().GetCoinSettings()
 		for _, deposit := range service.procsDeposits {
 			// 获取当前块高
 			var curHeight uint64
-			if curHeight, err = rpcs.GetEth().GetCurrentHeight(); err != nil {
+			if curHeight, err = rpcs.GetRPC(coinSet.Name).GetCurrentHeight(); err != nil {
 				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
 				continue
 			}
 
-			stableHeight := utils.GetConfig().GetCoinSettings().Stable
-			if deposit.Height + uint64(stableHeight) >= curHeight {
+			stableHeight := uint64(coinSet.Stable)
+			if deposit.Height + stableHeight >= curHeight {
 				if err = TxIntoStable(&deposit, false); err != nil {
 					continue
 				}

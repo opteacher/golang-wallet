@@ -98,8 +98,8 @@ func (service *depositService) getCurrentHeight() error {
 
 func (service *depositService) startScanChain() {
 	var err error
-	coinName := utils.GetConfig().GetCoinSettings().Name
-	rpc := rpcs.GetEth()
+	coinSet := utils.GetConfig().GetCoinSettings()
+	rpc := rpcs.GetRPC(coinSet.Name)
 	for err == nil && service.status.Current() == START {
 		utils.LogMsgEx(utils.INFO, "块高: %d", service.height)
 
@@ -122,7 +122,7 @@ func (service *depositService) startScanChain() {
 
 			// 如果已经达到稳定块高，直接存入数据库
 			// @tobo: 通知后台
-			if deposit.Height + uint64(rpc.Stable) >= curHeight {
+			if deposit.Height + uint64(coinSet.Stable) >= curHeight {
 				utils.LogMsgEx(utils.INFO, "交易（%s）进入稳定状态", deposit.TxHash)
 
 				if err = TxIntoStable(&deposit, true); err != nil {
@@ -137,7 +137,7 @@ func (service *depositService) startScanChain() {
 
 		// 持久化高度到height表
 		if service.height % 20 == 0 {
-			if _, err = dao.GetHeightDAO().UpdateHeight(coinName, service.height); err != nil {
+			if _, err = dao.GetHeightDAO().UpdateHeight(coinSet.Name, service.height); err != nil {
 				utils.LogMsgEx(utils.ERROR, "更新块高失败：%v", err)
 				continue
 			}
