@@ -30,7 +30,7 @@ func GetDepositService() *depositService {
 
 func (service *depositService) create() error {
 	service.status.RegAsObs(service)
-	service.status.Init([]int { DESTORY, CREATE, INIT, START })
+	service.status.Init([]int { DESTORY, CREATE, INIT, START, STOP })
 	return nil
 }
 

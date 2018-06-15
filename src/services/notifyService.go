@@ -29,7 +29,7 @@ func GetNotifyService() *notifyService {
 
 func (service *notifyService) create() error {
 	service.status.RegAsObs(service)
-	service.status.Init([]int { DESTORY, CREATE, INIT, START })
+	service.status.Init([]int { DESTORY, CREATE, INIT, START, STOP })
 	return nil
 }
 
@@ -103,6 +103,7 @@ func (service *notifyService) startWaitForStable() {
 			}
 		}
 	}
+	service.status.TurnTo(DESTORY)
 }
 
 func (service *notifyService) waitForUnstableDeposit() {

@@ -1,6 +1,9 @@
 package utils
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type Observer interface {
 	BeforeTurn(status *Status, tgtStt int)
@@ -11,6 +14,7 @@ type Status struct {
 	AllStatus	[]int
 	statusVal	int
 	observers	[]Observer
+	mux			sync.RWMutex
 }
 
 func (stt *Status) Init(stts []int) {
