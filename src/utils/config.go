@@ -39,12 +39,19 @@ type msgsSetting struct {
 	Debugs map[string]string		`json:debugs`
 }
 
+type cmdsSetting struct {
+	Unknown string	`json:unknown`
+	Help string		`json:help`
+	Version string	`json:version`
+}
+
 type config struct {
 	sync.Once
 	base baseSetting
 	subs subsSetting
 	coin coinSetting
 	msgs msgsSetting
+	cmds cmdsSetting
 }
 
 var _config *config
@@ -72,6 +79,9 @@ func (cfg *config) create() error {
 		panic(err)
 	}
 	if err = cfg.loadJson("message", &cfg.msgs); err != nil {
+		panic(err)
+	}
+	if err = cfg.loadJson("command", &cfg.cmds); err != nil {
 		panic(err)
 	}
 	return nil
@@ -119,4 +129,8 @@ func (cfg *config) GetCoinSettings() coinSetting {
 
 func (cfg *config) GetMsgsSettings() msgsSetting {
 	return cfg.msgs
+}
+
+func (cfg *config) GetCmdsSettings() cmdsSetting {
+	return cfg.cmds
 }

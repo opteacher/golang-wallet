@@ -1,0 +1,5 @@
+{
+	"unknown": "未识别命令，使用help命令查看运行选项",
+	"help": "版本：wallet.0.0.1\nhelp命令：\n\tversion\t查看版本详情\n\tservice\t指定运行的服务（deposit/collect/withdraw），如果不指定，则运行所有服务\n可使用 help <command> 查看命令详细信息",
+	"version": "开发版 wallet.0.0.1 beta"
+}
