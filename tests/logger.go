@@ -12,8 +12,6 @@ func main() {
 
 	utils.LogIdxEx(utils.INFO, 0, nil)
 
-	utils.EnableDebugLog(true)
-
 	err := errors.New("error test")
 	utils.LogIdxEx(utils.DEBUG, 0, err)
 }

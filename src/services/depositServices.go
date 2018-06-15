@@ -98,7 +98,7 @@ func (service *depositService) getCurrentHeight() error {
 
 func (service *depositService) startScanChain() {
 	var err error
-	coinName := utils.GetConfig().GetCoinSettings().Name
+	coinCfg := utils.GetConfig().GetCoinSettings()
 	rpc := rpcs.GetEth()
 	for err == nil && service.status.Current() == START {
 		utils.LogMsgEx(utils.INFO, "块高: %d", service.height)
@@ -112,6 +112,16 @@ func (service *depositService) startScanChain() {
 
 		for _, deposit := range deposits {
 			utils.LogMsgEx(utils.INFO, "发现交易：%v", deposit)
+			dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
+				entities.BaseProcess {
+					deposit.TxHash,
+					entities.DEPOSIT,
+					entities.NOTIFY,
+					true,
+				},
+				deposit.Height,
+				deposit.Height + uint64(coinCfg.Stable),
+			})
 
 			// 获取当前块高
 			var curHeight uint64
@@ -132,12 +142,13 @@ func (service *depositService) startScanChain() {
 			} else {
 				// 未进入稳定状态，抛给通知等待服务
 				toNotifySig <- deposit
+				utils.LogMsgEx(utils.INFO, "交易（%s）进入等待列队", deposit.TxHash)
 			}
 		}
 
 		// 持久化高度到height表
 		if service.height % 20 == 0 {
-			if _, err = dao.GetHeightDAO().UpdateHeight(coinName, service.height); err != nil {
+			if _, err = dao.GetHeightDAO().UpdateHeight(coinCfg.Name, service.height); err != nil {
 				utils.LogMsgEx(utils.ERROR, "更新块高失败：%v", err)
 				continue
 			}

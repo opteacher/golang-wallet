@@ -4,7 +4,6 @@ import (
 	"sync"
 	"database/sql"
 	"databases"
-	"errors"
 	"entities"
 	"time"
 	"utils"
@@ -43,7 +42,7 @@ func (dao *depositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, 
 		useSQL = "AddDepositWithTime"
 	}
 	if insertSQL, ok = dao.sqls[useSQL]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New(useSQL))
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, useSQL)
 	}
 
 	var params = []interface {} {
@@ -76,7 +75,7 @@ func (dao *depositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, e
 		deposit.CreateTime = time.Now()
 	}
 	if insertSQL, ok = dao.sqls["AddStableDeposit"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("AddStableDeposit"))
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "AddStableDeposit")
 	}
 
 	var params = []interface {} {
@@ -105,7 +104,7 @@ func (dao *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit,
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = dao.sqls["GetUnstableDeposit"]; !ok {
-		return nil, utils.LogIdxEx(utils.ERROR, 0011, errors.New("GetUnstableDeposit"))
+		return nil, utils.LogIdxEx(utils.ERROR, 0011, "GetUnstableDeposit")
 	}
 
 	var rows *sql.Rows
@@ -138,5 +137,21 @@ func (dao *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit,
 }
 
 func (dao *depositDao) DepositIntoStable(txHash string) (int64, error) {
-	return 0, nil
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+	}
+
+	var updateSQL string
+	var ok bool
+	if updateSQL, ok = dao.sqls["DepositIntoStable"]; !ok {
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "DepositIntoStable")
+	}
+
+	var result sql.Result
+	if result, err = db.Exec(updateSQL, txHash); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0021, err))
+	}
+	return result.RowsAffected()
 }

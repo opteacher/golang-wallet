@@ -14,7 +14,7 @@ type BaseDeposit struct {
 	CreateTime time.Time
 }
 
-type TotalDeposit struct {
+type DatabaseDeposit struct {
 	BaseDeposit
 	Id int
 	Status int

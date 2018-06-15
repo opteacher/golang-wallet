@@ -4,7 +4,6 @@ import (
 	"sync"
 	"database/sql"
 	"databases"
-	"errors"
 	"utils"
 )
 
@@ -36,7 +35,7 @@ func (dao *heightDao) ChkOrAddAsset(asset string) (int64, error) {
 	var checkSQL string
 	var ok bool
 	if checkSQL, ok = dao.sqls["ChkExsAsset"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("ChkExsAsset"))
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "ChkExsAsset")
 	}
 
 	var rows *sql.Rows
@@ -58,7 +57,7 @@ func (dao *heightDao) ChkOrAddAsset(asset string) (int64, error) {
 
 	var insertSQL string
 	if insertSQL, ok = dao.sqls["AddAsset"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("AddAsset"))
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "AddAsset")
 	}
 
 	var result sql.Result
@@ -78,7 +77,7 @@ func (dao *heightDao) GetHeight(asset string) (uint64, error) {
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = dao.sqls["GetHeight"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("GetHeight"))
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "GetHeight")
 	}
 
 	var rows *sql.Rows
@@ -112,7 +111,7 @@ func (dao *heightDao) UpdateHeight(asset string, height uint64) (int64, error) {
 	var updateSQL string
 	var ok bool
 	if updateSQL, ok = dao.sqls["UpdateHeight"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New("UpdateHeight"))
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "UpdateHeight")
 	}
 
 	var result sql.Result
