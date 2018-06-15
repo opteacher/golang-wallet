@@ -112,6 +112,16 @@ func (service *depositService) startScanChain() {
 
 		for _, deposit := range deposits {
 			utils.LogMsgEx(utils.INFO, "发现交易：%v", deposit)
+			dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
+				entities.BaseProcess {
+					deposit.TxHash,
+					entities.DEPOSIT,
+					entities.NOTIFY,
+					true,
+				},
+				deposit.Height,
+				deposit.Height + uint64(coinSet.Stable),
+			})
 
 			// 获取当前块高
 			var curHeight uint64
@@ -132,6 +142,7 @@ func (service *depositService) startScanChain() {
 			} else {
 				// 未进入稳定状态，抛给通知等待服务
 				toNotifySig <- deposit
+				utils.LogMsgEx(utils.INFO, "交易（%s）进入等待列队", deposit.TxHash)
 			}
 		}
 

@@ -2,8 +2,8 @@ package main
 
 import (
 	"dao"
-	"log"
 	"entities"
+	"log"
 )
 
 func main() {
@@ -11,12 +11,6 @@ func main() {
 
 	var err error
 	var totalAffectRows int64
-
-	// Test DAO
-	addressDAO := dao.GetAddressDAO()
-	addressDAO.NewAddress("ETH", "0xabcd")
-	addressDAO.NewAddressInuse("BTC", "0x1234")
-	log.Println(addressDAO.FindInuseByAsset("BTC"))
 
 	depositDAO := dao.GetDepositDAO()
 	var deposit entities.BaseDeposit
