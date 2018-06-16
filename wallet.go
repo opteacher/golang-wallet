@@ -31,6 +31,7 @@ func runDeposit() {
 
 	go func() {
 		<- c
+		utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
 		depositService.Stop()
 		notifyService.Stop()
 		stop <- true
@@ -38,6 +39,7 @@ func runDeposit() {
 
 	<- stop
 	for !depositService.IsDestroy() || !notifyService.IsDestroy() {}
+	utils.LogMsgEx(utils.INFO, "退出完毕", nil)
 }
 
 func main() {

@@ -88,7 +88,7 @@ func (dao *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, er
 			sets = append(sets, "complete_height=?")
 			vals = append(vals, process.CompleteHeight)
 		}
-		if utils.StrArrayContains(entities.Types, process.Process) {
+		if utils.StrArrayContains(entities.Processes, process.Process) {
 			sets = append(sets, "process=?")
 			vals = append(vals, process.Process)
 		}
