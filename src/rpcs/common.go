@@ -8,6 +8,9 @@ import (
 type Rpc interface {
 	GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error)
 	GetCurrentHeight() (uint64, error)
+	GetDepositAmount() (map[string]float64, error)
+	GetBalance(address string) (float64, error)
+	SendFrom(address string, account string, amount float64) (string, error)
 }
 
 type rpc struct {

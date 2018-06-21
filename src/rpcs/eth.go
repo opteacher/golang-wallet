@@ -15,6 +15,7 @@ import (
 	"time"
 	"math/big"
 	"math"
+	"dao"
 )
 
 type eth struct {
@@ -197,4 +198,57 @@ func (rpc *eth) GetCurrentHeight() (uint64, error) {
 		strHeight = strHeight[2:]
 	}
 	return strconv.ParseUint(strHeight, 16, 64)
+}
+
+func (rpc *eth) GetDepositAmount() (map[string]float64, error) {
+	var err error
+	addrAmount := make(map[string]float64)
+	coinCfg := utils.GetConfig().GetCoinSettings()
+
+	var addresses []string
+	addrDAO := dao.GetAddressDAO()
+	if addresses, err = addrDAO.FindInuseByAsset(coinCfg.Name); err != nil {
+		return addrAmount, utils.LogMsgEx(utils.ERROR, "获取充值地址失败：%v", err)
+	}
+
+	for _, addr := range addresses {
+		var balance float64
+		if balance, err = rpc.GetBalance(addr); err != nil {
+			utils.LogMsgEx(utils.WARNING, "从%s获取余额失败", addr)
+			continue
+		}
+
+		if balance < coinCfg.MinCollect {
+			continue
+		}
+
+		addrAmount[addr] = balance
+	}
+	return addrAmount, nil
+}
+
+func (rpc *eth) SendFrom(address string, account string, amount float64) (string, error) {
+	return "", nil
+}
+
+func (rpc *eth) GetBalance(address string) (float64, error) {
+	var err error
+	var resp EthSucceedResp
+	id := fmt.Sprintf("%d", rand.Intn(1000))
+	params := []interface {} { address, "latest" }
+	if resp, err = rpc.sendRequest("eth_getBalance", params, id); err != nil {
+		return -1, utils.LogIdxEx(utils.ERROR, 31, err)
+	}
+
+	result := resp.Result.(string)
+	if result[0:2] == "0x" {
+		result = result[2:]
+	}
+	var balanceInt big.Int
+	balanceInt.SetString(result, 16)
+	var balanceFlt big.Float
+	decimal := big.NewInt(int64(math.Pow10(rpc.decimal)))
+	balanceFlt.SetInt(balanceInt.Div(&balanceInt, decimal))
+	ret, _ := balanceFlt.Float64()
+	return ret, nil
 }

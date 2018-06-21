@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"sync"
+	"time"
 )
 
 type baseSetting struct {
@@ -22,10 +23,13 @@ type subsSetting struct {
 }
 
 type coinSetting struct {
-	Name string	`json:name`
-	Url string	`json:url`
-	Decimal int	`json:decimal`
-	Stable int	`json:stable`
+	Name string			`json:name`
+	Url string			`json:url`
+	Decimal int			`json:decimal`
+	Stable int			`json:stable`
+	Collect string		`json:collect`
+	MinCollect float64	`json:minCollect`
+	CollectInterval time.Duration	`json:collectInterval`
 }
 
 type msgsSetting struct {
