@@ -9,8 +9,8 @@ import (
 )
 
 type depositService struct {
+	BaseService
 	sync.Once
-	status utils.Status
 	addresses []string
 	height uint64
 }
@@ -30,8 +30,7 @@ func GetDepositService() *depositService {
 
 func (service *depositService) create() error {
 	service.status.RegAsObs(service)
-	service.status.Init([]int { DESTORY, CREATE, INIT, START, STOP })
-	return nil
+	return service.BaseService.create()
 }
 
 func (service *depositService) BeforeTurn(s *utils.Status, tgtStt int) {
@@ -61,22 +60,6 @@ func (service *depositService) AfterTurn(s *utils.Status, srcStt int) {
 		go service.startScanChain()
 		utils.LogMsgEx(utils.INFO, "started", nil)
 	}
-}
-
-func (service *depositService) Init() {
-	service.status.TurnTo(INIT)
-}
-
-func (service *depositService) Start() {
-	service.status.TurnTo(START)
-}
-
-func (service *depositService) Stop()  {
-	service.status.TurnTo(STOP)
-}
-
-func (service *depositService) IsDestroy() bool {
-	return service.status.Current() == DESTORY
 }
 
 func (service *depositService) loadAddresses() error {

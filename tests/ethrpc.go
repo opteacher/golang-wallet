@@ -27,7 +27,10 @@ func main() {
 	//log.Printf("Add deposits succeed: %d\n", totalAffectRows)
 
 	var txHash string
-	if txHash, err = rpcs.GetRPC("ETH").SendFrom("a", "b", 10.23456); err != nil {
+	if txHash, err = rpcs.GetRPC("ETH").SendFrom(
+		"0x47e8e8e49a8c1c308e84439f2c55ef18710f5ed6",
+		"0x65711d2e616b437e65273d30d4385fd0028a461b",
+		10.23456); err != nil {
 		log.Fatal(err)
 	}
 	log.Println(txHash)

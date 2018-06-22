@@ -15,6 +15,31 @@ const (
 	START
 )
 
+type BaseService struct {
+	status utils.Status
+}
+
+func (service *BaseService) create() error {
+	service.status.Init([]int { DESTORY, CREATE, INIT, START, STOP })
+	return nil
+}
+
+func (service *BaseService) Init() {
+	service.status.TurnTo(INIT)
+}
+
+func (service *BaseService) Start() {
+	service.status.TurnTo(START)
+}
+
+func (service *BaseService) Stop() {
+	service.status.TurnTo(STOP)
+}
+
+func (service *BaseService) IsDestroy() bool {
+	return service.status.Current() == DESTORY
+}
+
 func TxIntoStable(deposit *entities.BaseDeposit, insert bool) error {
 	var err error
 	if insert {

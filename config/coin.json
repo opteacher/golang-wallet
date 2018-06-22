@@ -5,5 +5,7 @@
 	"stable": 12,
 	"collect": "",
 	"minCollect": 0.0001,
-	"collectInterval": 30
+	"collectInterval": 30,
+	"tradePassword": "FROM",
+	"unlockDuration": 20000
 }

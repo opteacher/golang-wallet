@@ -14,6 +14,9 @@ type baseSetting struct {
 }
 
 type subsSetting struct {
+	Server struct {
+		Port int		`json:port`
+	}					`json:server`
 	Db struct {
 		Url string		`json:url`
 		Name string		`json:name`
@@ -30,6 +33,8 @@ type coinSetting struct {
 	Collect string		`json:collect`
 	MinCollect float64	`json:minCollect`
 	CollectInterval time.Duration	`json:collectInterval`
+	TradePassword string	`json:tradePassword`
+	UnlockDuration int	`json:unlockDuration`
 }
 
 type msgsSetting struct {

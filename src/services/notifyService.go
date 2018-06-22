@@ -9,8 +9,8 @@ import (
 )
 
 type notifyService struct {
+	BaseService
 	sync.Once
-	status utils.Status
 	procsDeposits []entities.BaseDeposit
 }
 
@@ -29,8 +29,7 @@ func GetNotifyService() *notifyService {
 
 func (service *notifyService) create() error {
 	service.status.RegAsObs(service)
-	service.status.Init([]int { DESTORY, CREATE, INIT, START, STOP })
-	return nil
+	return service.BaseService.create()
 }
 
 func (service *notifyService) BeforeTurn(s *utils.Status, tgtStt int) {
@@ -58,22 +57,6 @@ func (service *notifyService) AfterTurn(s *utils.Status, srcStt int) {
 		go service.waitForUnstableDeposit()
 		utils.LogMsgEx(utils.INFO, "started", nil)
 	}
-}
-
-func (service *notifyService) Init() {
-	service.status.TurnTo(INIT)
-}
-
-func (service *notifyService) Start() {
-	service.status.TurnTo(START)
-}
-
-func (service *notifyService) Stop()  {
-	service.status.TurnTo(STOP)
-}
-
-func (service *notifyService) IsDestroy() bool {
-	return service.status.Current() == DESTORY
 }
 
 func (service *notifyService) loadIncompleteDeposits() error  {

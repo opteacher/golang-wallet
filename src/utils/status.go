@@ -28,6 +28,9 @@ func (stt *Status) TurnTo(status int) (int, error) {
 	if !IntArrayContains(stt.AllStatus, status) {
 		return orgStt, errors.New("Could not find identified status")
 	}
+	if stt.statusVal == status {
+		return stt.statusVal, nil
+	}
 	for _, obs := range stt.observers {
 		obs.BeforeTurn(stt, status)
 	}
