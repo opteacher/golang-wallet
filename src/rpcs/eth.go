@@ -227,7 +227,32 @@ func (rpc *eth) GetDepositAmount() (map[string]float64, error) {
 	return addrAmount, nil
 }
 
-func (rpc *eth) SendFrom(address string, account string, amount float64) (string, error) {
+func (rpc *eth) SendFrom(from string, to string, amount float64) (string, error) {
+	var err error
+
+	// 处理转账金额
+	var amountFlt big.Float
+	amountFlt.SetFloat64(amount)
+	decimal := math.Pow10(utils.GetConfig().GetCoinSettings().Decimal)
+	var decimalFlt big.Float
+	decimalFlt.SetFloat64(decimal)
+	var amountInt big.Int
+	amountInt.SetString(amountFlt.Mul(&amountFlt, &decimalFlt).String(), 10)
+	cvtAmount := fmt.Sprintf("0x%x", &amountInt)
+
+	// 计算手续费
+	params := make(map[string]interface {})
+	params["from"] = from
+	params["to"] = to
+	params["value"] = cvtAmount
+	mapParams, _ := json.Marshal(params)
+	strParams := string(mapParams)
+	id := fmt.Sprintf("%d", rand.Intn(1000))
+	var resp EthSucceedResp
+	if resp, err = rpc.sendRequest("eth_estimateGas", []interface {} { strParams, }, id); err != nil {
+		return "", utils.LogIdxEx(utils.ERROR, 32, err)
+	}
+	fmt.Println(resp)
 	return "", nil
 }
 
