@@ -1,9 +1,10 @@
-package main
+package tests
 
 import (
 	"fmt"
 	"utils"
 	"log"
+	"testing"
 )
 
 type TestObs struct {
@@ -17,7 +18,7 @@ func (o *TestObs) AfterTurn(s *utils.Status, srcStt int) {
 	log.Printf("After turn: %d, from %d\n", s.Current(), srcStt)
 }
 
-func main() {
+func TestStatus(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	//Test status and observer

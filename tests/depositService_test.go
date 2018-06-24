@@ -1,12 +1,13 @@
-package main
+package tests
 
 import (
 	"services"
 	"log"
 	"time"
+	"testing"
 )
 
-func main() {
+func TestDepositService(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	//Test service

@@ -13,12 +13,6 @@ import (
 	"apis"
 )
 
-const (
-	NONE = iota
-	HELP
-	SERVICE
-)
-
 func runService(svcs []*services.BaseService) {
 	var svc *services.BaseService
 	for _, svc = range svcs {
@@ -69,49 +63,55 @@ func runCollect() {
 	})
 }
 
+func runWithdraw() {
+
+}
+
 func main() {
-	var runStt utils.Status
-	runStt.Init([]int {
-		NONE, HELP, SERVICE,
-	})
-	argNum := len(os.Args) - 1
 	cmdSet := utils.GetConfig().GetCmdsSettings()
 	subSet := utils.GetConfig().GetSubsSettings()
-	for i, arg := range os.Args[1:] {
-		arg = strings.ToLower(arg)
-		switch arg {
+	// 收集参数
+	args := make(map[string]string)
+	curArg := ""
+	for _, arg := range os.Args[1:] {
+		if arg[0] == '-' {
+			curArg = arg[1:]
+			args[curArg] = ""
+		} else {
+			args[curArg] = arg
+			curArg = ""
+		}
+	}
+	// 根据参数启动相应的配置
+	for key, val := range args {
+		switch strings.ToLower(key) {
 		case "help":
-			runStt.TurnTo(HELP)
-			if i == argNum - 1 {
+			if val == "" {
 				fmt.Println(cmdSet.Help)
+			} else {
 			}
 		case "version":
 			fmt.Println(cmdSet.Version)
-		case "test":
-			fmt.Println("测试")
 		case "service":
-			runStt.TurnTo(SERVICE)
-		default:
-			switch runStt.Current() {
-			case HELP:
-				fmt.Println("帮助：" + arg)
-			case SERVICE:
-				switch arg {
-				case "deposit":
-					runDeposit()
-				case "collect":
-					runCollect()
-				case "withdraw":
-					http.HandleFunc("/api/withdraw", apis.WithdrawHandler)
-				default:
-					fmt.Println("指定的服务不存在")
-				}
-				utils.LogMsgEx(utils.INFO, "服务器监听于：%d", subSet.Server.Port)
-				log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", subSet.Server.Port), nil))
+			switch strings.ToLower(val) {
+			case "deposit":
+				runDeposit()
+			case "collect":
+				runCollect()
+			case "withdraw":
+
 			default:
-				fmt.Println(cmdSet.Unknown)
+
 			}
-			runStt.TurnTo(NONE)
+		case "rpc":
+			switch strings.ToLower(val) {
+			case "http":
+				fallthrough
+			default:
+				utils.LogMsgEx(utils.INFO, "服务器监听于：%d", subSet.Server.Port)
+				http.HandleFunc("/", apis.RootHandler)
+				log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", subSet.Server.Port), nil))
+			}
 		}
 	}
 }

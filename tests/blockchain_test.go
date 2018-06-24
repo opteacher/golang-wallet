@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"net/http"
 	"io/ioutil"
+	"testing"
 )
 
 const URL = "http://18.144.17.127:8545"
@@ -15,7 +16,7 @@ type ReqBody struct {
 	Id string		`json:id`
 }
 
-func main() {
+func TestBlockChain(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	// Request from blockchain

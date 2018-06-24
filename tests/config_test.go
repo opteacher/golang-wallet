@@ -1,11 +1,12 @@
-package main
+package tests
 
 import (
 	"utils"
 	"log"
+	"testing"
 )
 
-func main() {
+func TestConfig(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	//Test config

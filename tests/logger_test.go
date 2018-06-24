@@ -1,11 +1,12 @@
-package main
+package tests
 
 import (
 	"utils"
 	"errors"
+	"testing"
 )
 
-func main() {
+func TestLogger(t *testing.T) {
 	utils.LogMsgEx(utils.ERROR, "测试1：abcd", nil)
 	a := 2000
 	utils.LogMsgEx(utils.WARNING, "测试2：%d", a)

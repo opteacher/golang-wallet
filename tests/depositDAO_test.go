@@ -1,12 +1,13 @@
-package main
+package tests
 
 import (
 	"dao"
 	"entities"
 	"log"
+	"testing"
 )
 
-func main() {
+func TestDepositDAO(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	var err error

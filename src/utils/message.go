@@ -51,7 +51,7 @@ func LogIdxEx(level int, id int, detail interface {}) error {
 	}
 }
 
-func logMsgEx(level int, msg string, detail interface {}) error {
+func logMsgEx(level int, msg string, detail ...interface {}) error {
 	msgSet := GetConfig().GetMsgsSettings()
 	if !msgSet.Logs.Debug && level == DEBUG {
 		return procsDetail(detail)
@@ -64,7 +64,7 @@ func logMsgEx(level int, msg string, detail interface {}) error {
 	}
 
 	if detail != nil {
-		msg = fmt.Sprintf(msg, detail)
+		msg = fmt.Sprintf(msg, detail...)
 	}
 
 	strLevel := GetConfig().GetMsgsSettings().Level[strconv.Itoa(level)]
@@ -86,6 +86,6 @@ func procsDetail(detail interface {}) error {
 	return nil
 }
 
-func LogMsgEx(level int, msg string, detail interface {}) error {
-	return logMsgEx(level, msg, detail)
+func LogMsgEx(level int, msg string, detail ...interface {}) error {
+	return logMsgEx(level, msg, detail...)
 }

@@ -1,9 +1,10 @@
-package main
+package tests
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
+	"testing"
 )
 
 const DBUrl			= ""
@@ -47,7 +48,7 @@ func displayAll(db *sql.DB) bool {
 	return true
 }
 
-func main() {
+func TestDatabase(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	//Connect database

@@ -1,10 +1,11 @@
-package main
+package tests
 
 import (
 	"sync"
 	"log"
 	"fmt"
 	"time"
+	"testing"
 )
 
 var sig = make(chan int)
@@ -27,7 +28,7 @@ func testChannelByOK() {
 	log.Println("End")
 }
 
-func main() {
+func TestGoroutine(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	// Test goroutine

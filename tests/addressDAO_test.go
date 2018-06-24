@@ -1,11 +1,12 @@
-package main
+package tests
 
 import (
 	"dao"
 	"log"
+	"testing"
 )
 
-func main() {
+func TestAddressDAO(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	// Test DAO

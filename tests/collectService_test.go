@@ -1,11 +1,12 @@
-package main
+package tests
 
 import (
 	"services"
 	"time"
+	"testing"
 )
 
-func main() {
+func TestCollectService(t *testing.T) {
 	services.GetCollectService().Start()
 	time.Sleep(20 * time.Second)
 }
