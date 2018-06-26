@@ -3,12 +3,11 @@ package apis
 import (
 	"net/http"
 	"fmt"
-	"regexp"
-	"reflect"
 )
 
-func test() {
-
+var wdRouteMap = map[string]api {
+	"^/api/withdraw/([A-Z]{3,})/process$":	{ queryProcess, "GET" },
+	"^/api/withdraw/([A-Z]{3,})":			{ doWithdraw, "POST" },
 }
 
 func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
@@ -16,19 +15,6 @@ func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
 	return []byte("ttt")
 }
 
-var routeMap = map[string]interface {} {
-	"^/api/withdraw/([A-Z]{3,})/process$": queryProcess,
-}
-
-func WithdrawHandler(w http.ResponseWriter, req *http.Request) {
-	for route, handle := range routeMap {
-		re := regexp.MustCompile(route)
-		if re.MatchString(req.RequestURI) {
-			a := reflect.ValueOf(handle).Call([]reflect.Value {
-				reflect.ValueOf(w), reflect.ValueOf(req),
-			})
-			fmt.Println(a)
-			w.Write(a[0].Bytes())
-		}
-	}
+func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
+	return []byte("abcd")
 }

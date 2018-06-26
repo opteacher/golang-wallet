@@ -11,6 +11,7 @@ type Rpc interface {
 	GetDepositAmount() (map[string]float64, error)
 	GetBalance(address string) (float64, error)
 	SendFrom(from string, to string, amount float64) (string, error)
+	GetNewAddress() (string, error)
 }
 
 type rpc struct {

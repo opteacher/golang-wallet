@@ -19,7 +19,23 @@ var levels = map[int]string {
 	ERROR: "E", WARNING: "W", INFO: "I", DEBUG: "D",
 }
 
-func LogIdxEx(level int, id int, detail interface {}) error {
+func GetIdxMsg(idx string) string {
+	msgSet := GetConfig().GetMsgsSettings()
+	var msgs = map[string]string {}
+	switch idx[0:1] {
+	case "E":
+		msgs = msgSet.Errors
+	case "W":
+		msgs = msgSet.Warnings
+	case "I":
+		msgs = msgSet.Information
+	case "D":
+		msgs = msgSet.Debugs
+	}
+	return msgs[idx]
+}
+
+func LogIdxEx(level int, id int, detail ...interface {}) error {
 	msgSet := GetConfig().GetMsgsSettings()
 	if !msgSet.Logs.Debug && level == DEBUG {
 		return procsDetail(detail)
@@ -45,7 +61,7 @@ func LogIdxEx(level int, id int, detail interface {}) error {
 	}
 
 	if msg, ok := msgs[prefix + fmt.Sprintf("%04d", id)]; ok {
-		return logMsgEx(level, msg, detail)
+		return logMsgEx(level, msg, detail...)
 	} else {
 		return logMsgEx(level, "未找到指定的消息信息：%d", id)
 	}
@@ -69,7 +85,11 @@ func logMsgEx(level int, msg string, detail ...interface {}) error {
 
 	strLevel := GetConfig().GetMsgsSettings().Level[strconv.Itoa(level)]
 	log.Output(3, fmt.Sprintf("[%s] %s\n", strLevel, msg))
-	return procsDetail(detail)
+	if len(detail) > 1 {
+		return procsDetail(msg)
+	} else {
+		return procsDetail(detail)
+	}
 }
 
 func procsDetail(detail interface {}) error {

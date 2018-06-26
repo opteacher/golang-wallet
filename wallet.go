@@ -103,7 +103,7 @@ func main() {
 			default:
 
 			}
-		case "rpc":
+		case "remote":
 			switch strings.ToLower(val) {
 			case "http":
 				fallthrough

@@ -314,3 +314,16 @@ func (rpc *eth) GetBalance(address string) (float64, error) {
 	ret, _ := balanceFlt.Float64()
 	return ret, nil
 }
+
+func (rpc *eth) GetNewAddress() (string, error) {
+	var err error
+	var resp EthSucceedResp
+
+	id := fmt.Sprintf("%d", rand.Intn(1000))
+	params := []interface {} { utils.GetConfig().GetCoinSettings().TradePassword }
+	if resp, err = rpc.sendRequest("personal_newAccount", params, id); err != nil {
+		return "", utils.LogIdxEx(utils.ERROR, 36, err)
+	}
+
+	return resp.Result.(string), nil
+}

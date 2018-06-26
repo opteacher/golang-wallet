@@ -41,3 +41,13 @@ func TestSendTransaction(t *testing.T) {
 	}
 	log.Println(txHash)
 }
+
+func TestNewAddress(t *testing.T) {
+	var addr string
+	var err error
+	if addr, err = rpcs.GetRPC("ETH").GetNewAddress(); err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println(addr)
+	}
+}
