@@ -15,7 +15,7 @@ const WpLen = len(WithdrawPath)
 const DepositPath = "/api/deposit"
 const DpLen = len(DepositPath)
 
-type errRespVO struct {
+type respVO struct {
 	Code int			`json:code`
 	Msg string			`json:message`
 	Data interface {}	`json:data`
@@ -35,11 +35,10 @@ func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]ap
 			a := reflect.ValueOf(handle.Func).Call([]reflect.Value {
 				reflect.ValueOf(w), reflect.ValueOf(req),
 			})
-			fmt.Println(a)
 			w.Write(a[0].Bytes())
 		} else {
 			utils.LogIdxEx(utils.WARNING, 36, handle.Method, req.Method)
-			var resp errRespVO
+			var resp respVO
 			resp.Code = 404
 			resp.Msg = fmt.Sprintf(utils.GetIdxMsg("W0036"), handle.Method, req.Method)
 			respJSON , _:= json.Marshal(resp)

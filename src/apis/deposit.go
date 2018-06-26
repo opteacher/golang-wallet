@@ -2,15 +2,35 @@ package apis
 
 import (
 	"net/http"
+	"regexp"
+	"rpcs"
+	"encoding/json"
 )
 
+const newAddressPath = "^/api/deposit/([A-Z]{3,})/address$"
+
 func newAddress(w http.ResponseWriter, req *http.Request) []byte {
-	// @_@: 币种名应该从path中获得
-	//coinSet := utils.GetConfig().GetCoinSettings()
-	//rpc := rpcs.GetRPC(coinSet.Name)
-	return []byte("abcd")
+	re := regexp.MustCompile(newAddressPath)
+	params := re.FindStringSubmatch(req.RequestURI)[1:]
+	coinName := params[0]
+	rpc := rpcs.GetRPC(coinName)
+
+	var address string
+	var err error
+	var resp respVO
+	if address, err = rpc.GetNewAddress(); err != nil {
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	resp.Code = 200
+	resp.Data = address
+	ret, _ := json.Marshal(resp)
+	return ret
 }
 
 var dpRouteMap = map[string]api {
-	"^/api/deposit/([A-Z]{3,})/address":	{ newAddress, "GET" },
+	newAddressPath:	{ newAddress, "GET" },
 }
