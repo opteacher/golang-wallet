@@ -11,8 +11,9 @@ type Rpc interface {
 	GetDepositAmount() (map[string]float64, error)
 	GetBalance(address string) (float64, error)
 	SendFrom(from string, to string, amount float64) (string, error)
-	SendTo(from string, to string, amount float64, id int) (string, error)
+	SendTo(from string, to string, amount float64) (string, error)
 	GetNewAddress() (string, error)
+	GetTransaction(txHash string) (entities.DatabaseWithdraw, error)
 }
 
 type rpc struct {

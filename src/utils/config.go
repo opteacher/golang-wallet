@@ -10,48 +10,49 @@ import (
 )
 
 type baseSetting struct {
-	Env string	`json:env`
+	Env string	`json:"env"`
 }
 
 type subsSetting struct {
 	Server struct {
-		Port int		`json:port`
-	}					`json:server`
+		Port int		`json:"port"`
+	}					`json:"server"`
 	Db struct {
-		Url string		`json:url`
-		Name string		`json:name`
-		Username string	`json:username`
-		Password string	`json:password`
-	}					`json:db`
+		Url string		`json:"url"`
+		Name string		`json:"name"`
+		Username string	`json:"username"`
+		Password string	`json:"password"`
+	}					`json:"db"`
 }
 
 type coinSetting struct {
-	Name string			`json:name`
-	Url string			`json:url`
-	Decimal int			`json:decimal`
-	Stable int			`json:stable`
-	Collect string		`json:collect`
-	MinCollect float64	`json:minCollect`
-	CollectInterval time.Duration	`json:collectInterval`
-	TradePassword string	`json:tradePassword`
-	UnlockDuration int	`json:unlockDuration`
+	Name string						`json:"name"`
+	Url string						`json:"url"`
+	Decimal int						`json:"decimal"`
+	Stable int						`json:"stable"`
+	Collect string					`json:"collect"`
+	MinCollect float64				`json:"minCollect"`
+	CollectInterval time.Duration	`json:"collectInterval"`
+	TradePassword string			`json:"tradePassword"`
+	UnlockDuration int				`json:"unlockDuration"`
+	WithdrawAddress string			`json:"withdrawAddress"`
 }
 
 type msgsSetting struct {
 	Logs struct {
-		Debug bool					`json:debug`
-	}								`json:logs`
-	Level map[string]string			`json:level`
-	Errors map[string]string		`json:errors`
-	Warnings map[string]string		`json:warnings`
-	Information map[string]string	`json:information`
-	Debugs map[string]string		`json:debugs`
+		Debug bool					`json:"debug"`
+	}								`json:"logs"`
+	Level map[string]string			`json:"level"`
+	Errors map[string]string		`json:"errors"`
+	Warnings map[string]string		`json:"warnings"`
+	Information map[string]string	`json:"information"`
+	Debugs map[string]string		`json:"debugs"`
 }
 
 type cmdsSetting struct {
-	Unknown string	`json:unknown`
-	Help string		`json:help`
-	Version string	`json:version`
+	Unknown string	`json:"unknown"`
+	Help string		`json:"help"`
+	Version string	`json:"version"`
 }
 
 type config struct {

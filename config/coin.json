@@ -7,5 +7,6 @@
 	"minCollect": 0.0001,
 	"collectInterval": 30,
 	"tradePassword": "FROM",
-	"unlockDuration": 20000
+	"unlockDuration": 20000,
+	"withdrawAddress": "0xacbcd"
 }

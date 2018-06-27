@@ -100,6 +100,10 @@ func (service *depositService) startScanChain() {
 
 		for _, deposit := range deposits {
 			utils.LogMsgEx(utils.INFO, "发现交易：%v", deposit)
+			if _, err = dao.GetDepositDAO().AddScannedDeposit(&deposit); err != nil {
+				utils.LogMsgEx(utils.ERROR, "添加未稳定提币记录失败：%v", err)
+				continue
+			}
 			dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
 				entities.BaseProcess {
 					deposit.TxHash,

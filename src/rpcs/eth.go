@@ -73,6 +73,32 @@ type TransactionBody struct {
 	Gas string		`json:"gas"`
 }
 
+func (rpc *eth) strProp(tx map[string]interface{}, key string) (string, error) {
+	var itfc interface {}
+	var ok bool
+	if itfc, ok = tx[key]; !ok {
+		return "", utils.LogMsgEx(utils.ERROR, "交易未包含所需字段：%s", key)
+	}
+	return itfc.(string), nil
+}
+
+func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Int, error) {
+	var err error
+	var numTmp = big.NewInt(0)
+	var strTmp string
+	if strTmp, err = rpc.strProp(tx, key); err != nil {
+		return numTmp, err
+	}
+	if strTmp[:2] == "0x" {
+		strTmp = strTmp[2:]
+	}
+	var ok bool
+	if numTmp, ok = numTmp.SetString(strTmp, 16); !ok {
+		return numTmp, utils.LogIdxEx(utils.ERROR, 29, strTmp)
+	}
+	return numTmp, nil
+}
+
 func (rpc *eth) sendRequest(method string, params []interface {}, id string) (EthSucceedResp, error)  {
 	reqBody := RequestBody { method, params, id }
 	reqStr, err := json.Marshal(reqBody)
@@ -128,40 +154,13 @@ func (rpc *eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		return nil, utils.LogIdxEx(utils.WARNING, 0001, nil)
 	}
 
-	// 定义提取属性的方法
-	strProp := func(tx map[string]interface {}, key string) (string, error) {
-		var itfc interface {}
-
-		if itfc, ok = tx[key]; !ok {
-			return "", utils.LogMsgEx(utils.ERROR, "交易未包含所需字段：%s", key)
-		}
-
-		return itfc.(string), nil
-	}
-	numProp := func(tx map[string]interface {}, key string) (*big.Int, error) {
-		var err error
-		var numTmp = big.NewInt(0)
-		var strTmp string
-		if strTmp, err = strProp(tx, key); err != nil {
-			return numTmp, err
-		}
-		if strTmp[:2] == "0x" {
-			strTmp = strTmp[2:]
-		}
-
-		if numTmp, ok = numTmp.SetString(strTmp, 16); !ok {
-			return numTmp, utils.LogIdxEx(utils.ERROR, 29, strTmp)
-		}
-		return numTmp, nil
-	}
-
 	// 扫描所有交易
 	txs := txsObj.([]interface {})
 	deposits := []entities.BaseDeposit{}
 	for i, tx := range txs {
 		rawTx := tx.(map[string]interface {})
 		deposit := entities.BaseDeposit{}
-		if deposit.Address, err = strProp(rawTx, "to"); err != nil {
+		if deposit.Address, err = rpc.strProp(rawTx, "to"); err != nil {
 			deposit.Address = "create contract"
 		}
 		// 如果充值地址不属于钱包，跳过
@@ -171,23 +170,23 @@ func (rpc *eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 		deposit.Asset	= "ETH"
 		deposit.TxIndex	= i
 		var heightBint *big.Int
-		if heightBint, err = numProp(rawTx, "blockNumber"); err != nil {
+		if heightBint, err = rpc.numProp(rawTx, "blockNumber"); err != nil {
 			continue
 		}
 		deposit.Height = heightBint.Uint64()
 		var timestampBint *big.Int
-		if timestampBint, err = numProp(respData, "timestamp"); err != nil {
+		if timestampBint, err = rpc.numProp(respData, "timestamp"); err != nil {
 			continue
 		}
 		deposit.CreateTime = time.Unix(timestampBint.Int64(), 0)
 		var valueBint *big.Int
-		if valueBint, err = numProp(rawTx, "value"); err != nil {
+		if valueBint, err = rpc.numProp(rawTx, "value"); err != nil {
 			continue
 		}
 		var amountBflt = big.NewFloat(0)
 		amountBflt.SetInt(valueBint.Div(valueBint, big.NewInt(int64(math.Pow10(rpc.decimal)))))
 		deposit.Amount, _ = amountBflt.Float64()
-		if deposit.TxHash, err = strProp(rawTx, "hash"); err != nil {
+		if deposit.TxHash, err = rpc.strProp(rawTx, "hash"); err != nil {
 			continue
 		}
 
@@ -293,7 +292,7 @@ func (rpc *eth) SendFrom(from string, to string, amount float64) (string, error)
 	}
 }
 
-func (rpc *eth) SendTo(from string, to string, amount float64, id int) (string, error) {
+func (rpc *eth) SendTo(from string, to string, amount float64) (string, error) {
 	return "", nil
 }
 
@@ -322,12 +321,26 @@ func (rpc *eth) GetBalance(address string) (float64, error) {
 func (rpc *eth) GetNewAddress() (string, error) {
 	var err error
 	var resp EthSucceedResp
-
 	id := fmt.Sprintf("%d", rand.Intn(1000))
 	params := []interface {} { utils.GetConfig().GetCoinSettings().TradePassword }
 	if resp, err = rpc.sendRequest("personal_newAccount", params, id); err != nil {
 		return "", utils.LogIdxEx(utils.ERROR, 36, err)
 	}
-
 	return resp.Result.(string), nil
+}
+
+func (rpc *eth) GetTransaction(txHash string) (entities.DatabaseWithdraw, error) {
+	var err error
+	var resp EthSucceedResp
+	var tx entities.DatabaseWithdraw
+	id := fmt.Sprintf("%d", rand.Intn(1000))
+	if resp, err = rpc.sendRequest("eth_getTransactionByHash", []interface {} {
+		txHash,
+	}, id); err != nil {
+		return tx, utils.LogIdxEx(utils.ERROR, 37, err)
+	}
+	result := resp.Result.(map[string]interface {})
+	fmt.Println(result)
+
+	return tx, nil
 }

@@ -65,3 +65,4 @@ func TxIntoStable(deposit *entities.BaseDeposit, insert bool) error {
 }
 
 var toNotifySig = make(chan entities.BaseDeposit)
+var revWithdrawSig = make(chan entities.BaseWithdraw)

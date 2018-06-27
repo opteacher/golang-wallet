@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+const (
+	DEPOSIT_FOUND = 1
+	DEPOSIT_FINISHED
+)
+
 type BaseDeposit struct {
 	TxHash string
 	Address string

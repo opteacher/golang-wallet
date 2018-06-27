@@ -105,11 +105,6 @@ func (service *notifyService) waitForUnstableDeposit() {
 		}
 		utils.LogMsgEx(utils.INFO, "接收到一笔需等待的充币：%v", deposit)
 
-		if _, err = dao.GetDepositDAO().AddScannedDeposit(&deposit); err != nil {
-			utils.LogMsgEx(utils.ERROR, "添加未稳定提币记录失败：%v", err)
-			continue
-		}
-
 		service.procsDeposits = append(service.procsDeposits, deposit)
 		utils.LogMsgEx(utils.INFO, "充币交易（%s）已处于等待状态", deposit.TxHash)
 	}

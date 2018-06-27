@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS withdraw (
   update_time DATETIME DEFAULT NOW() ON UPDATE NOW(),
   PRIMARY KEY(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+# NewWithdraw
+INSERT INTO withdraw (address, amount, asset) VALUES (?, ?, ?)
