@@ -36,6 +36,7 @@ func GetWithdrawService() *withdrawService {
 }
 
 func (service *withdrawService) create() error {
+	service.name = "withdrawService"
 	service.status.RegAsObs(service)
 	return service.BaseService.create()
 }
@@ -128,7 +129,7 @@ func (service *withdrawService) sendTransactions() {
 			}
 
 			// 检查交易的块高
-			var wd entities.DatabaseWithdraw
+			var wd entities.Transaction
 			if wd, err = rpc.GetTransaction(txHash); err != nil {
 				utils.LogMsgEx(utils.ERROR, "获取不到刚刚发送的交易：%v", err)
 				continue

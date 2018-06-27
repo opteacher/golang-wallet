@@ -53,3 +53,23 @@ func (dao *withdrawDao) NewWithdraw(withdraw entities.BaseWithdraw) (int64, erro
 	}
 	return result.RowsAffected()
 }
+
+func (dao *withdrawDao) WithdrawIntoStable(txHash string) (int64, error) {
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+	}
+
+	var updateSQL string
+	var ok bool
+	if updateSQL, ok = dao.sqls["WithdrawIntoStable"]; !ok {
+		return 0, utils.LogIdxEx(utils.ERROR, 0011, "WithdrawIntoStable")
+	}
+
+	var result sql.Result
+	if result, err = db.Exec(updateSQL, txHash); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0021, err))
+	}
+	return result.RowsAffected()
+}

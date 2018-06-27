@@ -16,7 +16,7 @@ import (
 type notifyService struct {
 	BaseService
 	sync.Once
-	procsDeposits []entities.BaseDeposit
+	waitForStableTxs []entities.Transaction
 }
 
 var _notifyService *notifyService
@@ -33,6 +33,7 @@ func GetNotifyService() *notifyService {
 }
 
 func (service *notifyService) create() error {
+	service.name = "notifyService"
 	service.status.RegAsObs(service)
 	return service.BaseService.create()
 }
@@ -67,7 +68,13 @@ func (service *notifyService) AfterTurn(s *utils.Status, srcStt int) {
 func (service *notifyService) loadIncompleteDeposits() error  {
 	coinSetting := utils.GetConfig().GetCoinSettings()
 	var err error
-	service.procsDeposits, err = dao.GetDepositDAO().GetUnstableDeposit(coinSetting.Name)
+	var deposits []entities.BaseDeposit
+	if deposits, err = dao.GetDepositDAO().GetUnstableDeposit(coinSetting.Name); err != nil {
+		return err
+	}
+	for _, deposit := range deposits {
+		service.waitForStableTxs = append(service.waitForStableTxs, deposit.Transaction)
+	}
 	return err
 }
 
@@ -76,7 +83,7 @@ func (service *notifyService) startWaitForStable() {
 	for err == nil && service.status.Current() == START {
 		//如果达到协程上限，则等待
 		coinSet := utils.GetConfig().GetCoinSettings()
-		for _, deposit := range service.procsDeposits {
+		for _, tx := range service.waitForStableTxs {
 			// 获取当前块高
 			var curHeight uint64
 			if curHeight, err = rpcs.GetRPC(coinSet.Name).GetCurrentHeight(); err != nil {
@@ -85,8 +92,8 @@ func (service *notifyService) startWaitForStable() {
 			}
 
 			stableHeight := uint64(coinSet.Stable)
-			if deposit.Height + stableHeight >= curHeight {
-				if err = TxIntoStable(&deposit, false); err != nil {
+			if tx.Height + stableHeight >= curHeight {
+				if err = TxIntoStable(tx.TxHash, curHeight); err != nil {
 					continue
 				}
 			}
@@ -98,15 +105,15 @@ func (service *notifyService) startWaitForStable() {
 func (service *notifyService) waitForUnstableDeposit() {
 	var err error
 	for err == nil && service.status.Current() == START {
-		var deposit entities.BaseDeposit
+		var tx entities.Transaction
 		var ok bool
-		if deposit, ok = <- toNotifySig; !ok {
+		if tx, ok = <- toNotifySig; !ok {
 			break
 		}
-		utils.LogMsgEx(utils.INFO, "接收到一笔需等待的充币：%v", deposit)
+		utils.LogMsgEx(utils.INFO, "接收到一笔需等待的充币：%v", tx)
 
-		service.procsDeposits = append(service.procsDeposits, deposit)
-		utils.LogMsgEx(utils.INFO, "充币交易（%s）已处于等待状态", deposit.TxHash)
+		service.waitForStableTxs = append(service.waitForStableTxs, tx)
+		utils.LogMsgEx(utils.INFO, "充币交易（%s）已处于等待状态", tx.TxHash)
 	}
 	service.status.TurnTo(DESTORY)
 }

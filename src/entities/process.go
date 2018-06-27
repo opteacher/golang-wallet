@@ -37,6 +37,7 @@ type BaseProcess struct {
 type DatabaseProcess struct {
 	BaseProcess
 	Height uint64			`json:"height"`
+	CurrentHeight uint64	`json:"current_height"`
 	CompleteHeight uint64	`json:"complete_height"`
 	LastUpdateTime time.Time`json:"last_update_time"`
 }

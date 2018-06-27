@@ -132,7 +132,7 @@ func (rpc *eth) sendRequest(method string, params []interface {}, id string) (Et
 	return resBody, nil
 }
 
-func (rpc *eth) GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error) {
+func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 	var err error
 	// 发送请求获取指定高度的块
 	var resp EthSucceedResp
@@ -145,7 +145,7 @@ func (rpc *eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 
 	// 解析返回数据，提取交易
 	if resp.Result == nil {
-		return []entities.BaseDeposit {}, utils.LogMsgEx(utils.ERROR, "找不到指定块高的块：%d", height)
+		return []entities.Transaction {}, utils.LogMsgEx(utils.ERROR, "找不到指定块高的块：%d", height)
 	}
 	respData := resp.Result.(map[string]interface {})
 	var txsObj interface {}
@@ -156,43 +156,43 @@ func (rpc *eth) GetTransactions(height uint, addresses []string) ([]entities.Bas
 
 	// 扫描所有交易
 	txs := txsObj.([]interface {})
-	deposits := []entities.BaseDeposit{}
+	transactions := []entities.Transaction {}
 	for i, tx := range txs {
 		rawTx := tx.(map[string]interface {})
-		deposit := entities.BaseDeposit{}
-		if deposit.Address, err = rpc.strProp(rawTx, "to"); err != nil {
-			deposit.Address = "create contract"
+		rpcTx := entities.Transaction{}
+		// 交易地址
+		if rpcTx.From, err = rpc.strProp(rawTx, "from"); err != nil {
+			rpcTx.From = ""
 		}
-		// 如果充值地址不属于钱包，跳过
-		if !utils.StrArrayContains(addresses, deposit.Address) {
-			continue
+		if rpcTx.To, err = rpc.strProp(rawTx, "to"); err != nil {
+			rpcTx.To = ""
 		}
-		deposit.Asset	= "ETH"
-		deposit.TxIndex	= i
+		rpcTx.Asset = rpc.coinName
+		rpcTx.TxIndex = i
 		var heightBint *big.Int
 		if heightBint, err = rpc.numProp(rawTx, "blockNumber"); err != nil {
 			continue
 		}
-		deposit.Height = heightBint.Uint64()
+		rpcTx.Height = heightBint.Uint64()
 		var timestampBint *big.Int
 		if timestampBint, err = rpc.numProp(respData, "timestamp"); err != nil {
 			continue
 		}
-		deposit.CreateTime = time.Unix(timestampBint.Int64(), 0)
+		rpcTx.CreateTime = time.Unix(timestampBint.Int64(), 0)
 		var valueBint *big.Int
 		if valueBint, err = rpc.numProp(rawTx, "value"); err != nil {
 			continue
 		}
 		var amountBflt = big.NewFloat(0)
 		amountBflt.SetInt(valueBint.Div(valueBint, big.NewInt(int64(math.Pow10(rpc.decimal)))))
-		deposit.Amount, _ = amountBflt.Float64()
-		if deposit.TxHash, err = rpc.strProp(rawTx, "hash"); err != nil {
+		rpcTx.Amount, _ = amountBflt.Float64()
+		if rpcTx.TxHash, err = rpc.strProp(rawTx, "hash"); err != nil {
 			continue
 		}
 
-		deposits = append(deposits, deposit)
+		transactions = append(transactions, rpcTx)
 	}
-	return deposits, nil
+	return transactions, nil
 }
 
 func (rpc *eth) GetCurrentHeight() (uint64, error) {
@@ -329,10 +329,10 @@ func (rpc *eth) GetNewAddress() (string, error) {
 	return resp.Result.(string), nil
 }
 
-func (rpc *eth) GetTransaction(txHash string) (entities.DatabaseWithdraw, error) {
+func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
 	var err error
 	var resp EthSucceedResp
-	var tx entities.DatabaseWithdraw
+	var tx entities.Transaction
 	id := fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("eth_getTransactionByHash", []interface {} {
 		txHash,

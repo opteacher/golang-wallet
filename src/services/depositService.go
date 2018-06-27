@@ -34,6 +34,7 @@ func GetDepositService() *depositService {
 }
 
 func (service *depositService) create() error {
+	service.name = "depositService"
 	service.status.RegAsObs(service)
 	return service.BaseService.create()
 }
@@ -92,16 +93,31 @@ func (service *depositService) startScanChain() {
 		utils.LogMsgEx(utils.INFO, "块高: %d", service.height)
 
 		// 获取指定高度的交易
-		var deposits []entities.BaseDeposit
-		if deposits, err = rpc.GetTransactions(uint(service.height), service.addresses); err != nil {
+		var txs []entities.Transaction
+		if txs, err = rpc.GetTransactions(uint(service.height)); err != nil {
 			utils.LogMsgEx(utils.ERROR, "获取交易失败：%v", err)
 			continue
 		}
 
-		for _, deposit := range deposits {
-			utils.LogMsgEx(utils.INFO, "发现交易：%v", deposit)
+		for _, tx := range txs {
+			// 如果充值地址不属于钱包，跳过
+			if !utils.StrArrayContains(service.addresses, tx.To) {
+				continue
+			}
+
+			utils.LogMsgEx(utils.INFO, "发现交易：%v", tx)
+			deposit := entities.TurnTxToDeposit(&tx)
+
+			// 持久化到数据库
 			if _, err = dao.GetDepositDAO().AddScannedDeposit(&deposit); err != nil {
 				utils.LogMsgEx(utils.ERROR, "添加未稳定提币记录失败：%v", err)
+				continue
+			}
+
+			// 获取当前块高
+			var curHeight uint64
+			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
+				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
 				continue
 			}
 			dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
@@ -113,29 +129,22 @@ func (service *depositService) startScanChain() {
 					true,
 				},
 				deposit.Height,
+				curHeight,
 				deposit.Height + uint64(coinSet.Stable),
 				time.Now(),
 			})
 
-			// 获取当前块高
-			var curHeight uint64
-			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
-				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
-				continue
-			}
-
 			// 如果已经达到稳定块高，直接存入数据库
-			// @tobo: 通知后台
 			if deposit.Height + uint64(coinSet.Stable) >= curHeight {
 				utils.LogMsgEx(utils.INFO, "交易（%s）进入稳定状态", deposit.TxHash)
 
-				if err = TxIntoStable(&deposit, true); err != nil {
+				if err = TxIntoStable(tx.TxHash, curHeight); err != nil {
 					utils.LogMsgEx(utils.ERROR, "插入稳定交易记录失败：%v", err)
 					continue
 				}
 			} else {
 				// 未进入稳定状态，抛给通知等待服务
-				toNotifySig <- deposit
+				toNotifySig <- tx
 				utils.LogMsgEx(utils.INFO, "交易（%s）进入等待列队", deposit.TxHash)
 			}
 		}

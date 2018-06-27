@@ -6,14 +6,14 @@ import (
 )
 
 type Rpc interface {
-	GetTransactions(height uint, addresses []string) ([]entities.BaseDeposit, error)
+	GetTransactions(height uint) ([]entities.Transaction, error)
 	GetCurrentHeight() (uint64, error)
 	GetDepositAmount() (map[string]float64, error)
 	GetBalance(address string) (float64, error)
 	SendFrom(from string, to string, amount float64) (string, error)
 	SendTo(from string, to string, amount float64) (string, error)
 	GetNewAddress() (string, error)
-	GetTransaction(txHash string) (entities.DatabaseWithdraw, error)
+	GetTransaction(txHash string) (entities.Transaction, error)
 }
 
 type rpc struct {

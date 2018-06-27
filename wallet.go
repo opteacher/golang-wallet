@@ -6,22 +6,27 @@ import (
 	"fmt"
 	"strings"
 	"services"
-	"os/signal"
 	"unsafe"
 	"log"
 	"net/http"
 	"apis"
+	"os/signal"
 )
 
-func runService(svcs []*services.BaseService) {
-	var svc *services.BaseService
-	for _, svc = range svcs {
+func initServices(svcs []*services.BaseService) {
+	for _, svc := range svcs {
 		svc.Init()
 	}
+}
 
-	for _, svc = range svcs {
+func runServices() {
+	for _, svc := range services.GetInitedServices() {
 		svc.Start()
 	}
+}
+
+func exitCtrl() {
+	svcs := services.GetInitedServices()
 
 	c := make(chan os.Signal, 1)
 	stop := make(chan bool)
@@ -30,16 +35,23 @@ func runService(svcs []*services.BaseService) {
 	go func() {
 		<- c
 		utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
-		for _, svc = range svcs {
+		for _, svc := range svcs {
 			svc.Stop()
 		}
 		stop <- true
 	}()
 
 	<- stop
+	svcStts := make(map[string]int)
 	for notYet := true; notYet; {
-		for _, svc = range svcs {
+		for _, svc := range svcs {
 			if !svc.IsDestroy() {
+				if stt, ok := svcStts[svc.Name()]; ok {
+					if stt == svc.CurrentStatus() { continue }
+				}
+				utils.LogMsgEx(utils.WARNING, "%s服务还未安全退出，处于状态：%s",
+					svc.Name(), services.ServiceStatus[svc.CurrentStatus()])
+				svcStts[svc.Name()] = svc.CurrentStatus()
 				notYet = true
 				break
 			} else {
@@ -50,21 +62,18 @@ func runService(svcs []*services.BaseService) {
 	utils.LogMsgEx(utils.INFO, "退出完毕", nil)
 }
 
-func runDeposit() {
-	runService([]*services.BaseService {
-		(*services.BaseService)(unsafe.Pointer(services.GetDepositService())),
-		(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
-	})
+var depositServices = []*services.BaseService {
+	(*services.BaseService)(unsafe.Pointer(services.GetDepositService())),
+	(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
 }
 
-func runCollect() {
-	runService([]*services.BaseService {
-		(*services.BaseService)(unsafe.Pointer(services.GetCollectService())),
-	})
+var collectServices = []*services.BaseService {
+	(*services.BaseService)(unsafe.Pointer(services.GetCollectService())),
 }
 
-func runWithdraw() {
-
+var withdrawServices = []*services.BaseService {
+	(*services.BaseService)(unsafe.Pointer(services.GetWithdrawService())),
+	(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
 }
 
 func main() {
@@ -75,7 +84,7 @@ func main() {
 	curArg := ""
 	for _, arg := range os.Args[1:] {
 		if arg[0] == '-' {
-			curArg = arg[1:]
+			curArg = strings.ToLower(arg[1:])
 			args[curArg] = ""
 		} else {
 			args[curArg] = arg
@@ -84,34 +93,45 @@ func main() {
 	}
 	// 根据参数启动相应的配置
 	for key, val := range args {
-		switch strings.ToLower(key) {
+		switch key {
 		case "help":
 			if val == "" {
 				fmt.Println(cmdSet.Help)
 			} else {
 			}
+			return
 		case "version":
 			fmt.Println(cmdSet.Version)
+			return
 		case "service":
 			switch strings.ToLower(val) {
 			case "deposit":
-				runDeposit()
+				initServices(depositServices)
 			case "collect":
-				runCollect()
+				initServices(collectServices)
 			case "withdraw":
-
+				initServices(withdrawServices)
+			case "all":
+				initServices(depositServices)
+				initServices(collectServices)
+				initServices(withdrawServices)
 			default:
-
+				utils.LogMsgEx(utils.WARNING, "找不到指定的服务：%s", val)
 			}
 		case "remote":
 			switch strings.ToLower(val) {
 			case "http":
 				fallthrough
 			default:
-				utils.LogMsgEx(utils.INFO, "服务器监听于：%d", subSet.Server.Port)
-				http.HandleFunc("/", apis.RootHandler)
-				log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", subSet.Server.Port), nil))
+				go func() {
+					utils.LogMsgEx(utils.INFO, "服务器监听于：%d", subSet.Server.Port)
+					http.HandleFunc("/", apis.RootHandler)
+					log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", subSet.Server.Port), nil))
+				}()
 			}
 		}
 	}
+	// 启动服务器
+	runServices()
+	exitCtrl()
 }

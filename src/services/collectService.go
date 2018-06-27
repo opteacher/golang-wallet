@@ -28,6 +28,7 @@ func GetCollectService() *collectService {
 }
 
 func (service *collectService) create() error {
+	service.name = "collectService"
 	service.status.RegAsObs(service)
 	return service.BaseService.create()
 }

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS process (
   asset CHAR(32) NOT NULL,
   `type` VARCHAR(64) NOT NULL COMMENT 'DEPOSIT/COLLECT/WITHDRAW',
   height INTEGER(11) DEFAULT 0,
+  current_height INTEGER(11),
   complete_height INTEGER(11),
   process VARCHAR(64) NOT NULL,
   cancelable TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0/1: 不/可取消',
@@ -12,7 +13,7 @@ CREATE TABLE IF NOT EXISTS process (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 # AddProcess
-INSERT INTO process (tx_hash, asset, `type`, height, complete_height, process, cancelable) VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO process (tx_hash, asset, `type`, height, current_height, complete_height, process, cancelable) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 
 # UpdateProcessByHash
 UPDATE process SET %s WHERE tx_hash=?
@@ -21,4 +22,4 @@ UPDATE process SET %s WHERE tx_hash=?
 SELECT COUNT(tx_hash) FROM process WHERE tx_hash=?
 
 # QueryProcess
-SELECT tx_hash, asset, `type`, height, complete_height, process, cancelable, last_update_time from process WHERE asset=? AND tx_hash=?
+SELECT tx_hash, asset, `type`, height, current_height, complete_height, process, cancelable, last_update_time from process WHERE asset=? AND tx_hash=?

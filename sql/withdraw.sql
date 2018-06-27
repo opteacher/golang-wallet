@@ -15,3 +15,6 @@ CREATE TABLE IF NOT EXISTS withdraw (
 
 # NewWithdraw
 INSERT INTO withdraw (address, amount, asset) VALUES (?, ?, ?)
+
+# WithdrawIntoStable
+UPDATE withdraw SET status=4 WHERE tx_hash=?
