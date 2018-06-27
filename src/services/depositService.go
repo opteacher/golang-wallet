@@ -1,13 +1,18 @@
 package services
 
 import (
-	"utils"
 	"sync"
+	"utils"
 	"dao"
-	"entities"
 	"rpcs"
+	"entities"
+	"time"
 )
 
+/***
+	充值服务：启动子协程扫描链，过滤充值交易，并提交到notify服务等待其稳定
+	子协程（startScanChain）：扫描区块，找到充值交易
+ */
 type depositService struct {
 	BaseService
 	sync.Once
@@ -98,12 +103,14 @@ func (service *depositService) startScanChain() {
 			dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
 				entities.BaseProcess {
 					deposit.TxHash,
+					deposit.Asset,
 					entities.DEPOSIT,
 					entities.NOTIFY,
 					true,
 				},
 				deposit.Height,
 				deposit.Height + uint64(coinSet.Stable),
+				time.Now(),
 			})
 
 			// 获取当前块高

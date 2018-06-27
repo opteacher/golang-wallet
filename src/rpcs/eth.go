@@ -48,29 +48,29 @@ func (rpc *eth) create() {
 }
 
 type EthSucceedResp struct {
-	JsonRpc string		`json:jsonrpc`
-	Id string			`json:id`
-	Result interface{}	`json:result`
+	JsonRpc string		`json:"jsonrpc"`
+	Id string			`json:"id"`
+	Result interface{}	`json:"result"`
 }
 
 type EthFailedResp struct {
-	JsonRpc string		`json:jsonrpc`
-	Id string			`json:id`
+	JsonRpc string		`json:"jsonrpc"`
+	Id string			`json:"id"`
 	Error struct {
-		Code int		`json:code`
-		Message string	`json:message`
-	}					`json:error`
+		Code int		`json:"code"`
+		Message string	`json:"message"`
+	}					`json:"error"`
 }
 
 type EstimateGasBody struct {
-	From string		`json:from`
-	To string		`json:to`
-	Value string	`json:value`
+	From string		`json:"from"`
+	To string		`json:"to"`
+	Value string	`json:"value"`
 }
 
 type TransactionBody struct {
 	EstimateGasBody
-	Gas string		`json:gas`
+	Gas string		`json:"gas"`
 }
 
 func (rpc *eth) sendRequest(method string, params []interface {}, id string) (EthSucceedResp, error)  {
@@ -291,6 +291,10 @@ func (rpc *eth) SendFrom(from string, to string, amount float64) (string, error)
 	} else {
 		return resp.Result.(string), nil
 	}
+}
+
+func (rpc *eth) SendTo(from string, to string, amount float64, id int) (string, error) {
+	return "", nil
 }
 
 func (rpc *eth) GetBalance(address string) (float64, error) {

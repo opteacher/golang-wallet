@@ -8,6 +8,11 @@ import (
 	"rpcs"
 )
 
+/***
+	通知服务：接收来自充值和提币的交易，等待其稳定后做后续操作
+	子协程（startWaitForStable）：等待交易进入稳定状态
+	子协程（waitForUnstableDeposit）：等待来自充值和提币的交易
+ */
 type notifyService struct {
 	BaseService
 	sync.Once

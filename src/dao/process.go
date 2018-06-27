@@ -63,6 +63,7 @@ func (dao *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, er
 
 		if result, err = db.Exec(insertSQL, []interface {} {
 			process.TxHash,
+			process.Asset,
 			process.Type,
 			process.Height,
 			process.CompleteHeight,
@@ -107,5 +108,49 @@ func (dao *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, er
 			panic(utils.LogIdxEx(utils.ERROR, 0012, err))
 		}
 		return result.RowsAffected()
+	}
+}
+
+func (dao *processDao) QueryProcess(asset string, txHash string) (entities.DatabaseProcess, error) {
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+	}
+
+	var process entities.DatabaseProcess
+	var selectSQL string
+	var ok bool
+	if selectSQL, ok = dao.sqls["QueryProcess"]; !ok {
+		return process, utils.LogIdxEx(utils.ERROR, 0011, "QueryProcess")
+	}
+
+	var rows *sql.Rows
+	if rows, err = db.Query(selectSQL, asset, txHash); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		if err = rows.Scan([]interface {} {
+			&process.TxHash,
+			&process.Asset,
+			&process.Type,
+			&process.Height,
+			&process.CompleteHeight,
+			&process.Process,
+			&process.Cancelable,
+			&process.LastUpdateTime,
+		}...); err != nil {
+			return process, utils.LogIdxEx(utils.ERROR, 0014, err)
+		} else {
+			return process, nil
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 0014, err))
+	} else {
+		panic(utils.LogMsgEx(utils.ERROR, "无法找到指定的进度任务：%s", txHash))
 	}
 }

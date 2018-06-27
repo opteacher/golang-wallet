@@ -54,6 +54,7 @@ func TxIntoStable(deposit *entities.BaseDeposit, insert bool) error {
 
 	var process entities.DatabaseProcess
 	process.TxHash = deposit.TxHash
+	process.Asset = deposit.Asset
 	process.Process = entities.FINISH
 	if _, err = dao.GetProcessDAO().SaveProcess(&process); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "插入/更新进度表失败：%v", err)

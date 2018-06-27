@@ -79,7 +79,7 @@ func logMsgEx(level int, msg string, detail ...interface {}) error {
 		level = ERROR
 	}
 
-	if detail != nil {
+	if len(detail) >= 1 && detail[0] != nil {
 		msg = fmt.Sprintf(msg, detail...)
 	}
 

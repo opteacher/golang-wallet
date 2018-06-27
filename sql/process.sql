@@ -1,6 +1,7 @@
 # CreateTable
 CREATE TABLE IF NOT EXISTS process (
   tx_hash VARCHAR(255) NOT NULL UNIQUE,
+  asset CHAR(32) NOT NULL,
   `type` VARCHAR(64) NOT NULL COMMENT 'DEPOSIT/COLLECT/WITHDRAW',
   height INTEGER(11) DEFAULT 0,
   complete_height INTEGER(11),
@@ -11,10 +12,13 @@ CREATE TABLE IF NOT EXISTS process (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 # AddProcess
-INSERT INTO process (tx_hash, `type`, height, complete_height, process, cancelable) VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO process (tx_hash, asset, `type`, height, complete_height, process, cancelable) VALUES (?, ?, ?, ?, ?, ?, ?)
 
 # UpdateProcessByHash
 UPDATE process SET %s WHERE tx_hash=?
 
 # CheckProcsExists
 SELECT COUNT(tx_hash) FROM process WHERE tx_hash=?
+
+# QueryProcess
+SELECT tx_hash, asset, `type`, height, complete_height, process, cancelable, last_update_time from process WHERE asset=? AND tx_hash=?

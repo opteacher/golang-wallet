@@ -1,5 +1,7 @@
 package entities
 
+import "time"
+
 const (
 	DEPOSIT		= "DEPOSIT"
 	COLLECT		= "COLLECT"
@@ -25,14 +27,16 @@ var Processes = []string {
 }
 
 type BaseProcess struct {
-	TxHash string		`field:tx_hash`
-	Type string			`field:type`
-	Process string		`field:process`
-	Cancelable bool		`field:cancelable`
+	TxHash string		`json:"tx_hash"`
+	Asset string		`json:"asset"`
+	Type string			`json:"type"`
+	Process string		`json:"process"`
+	Cancelable bool		`json:"cancelable"`
 }
 
 type DatabaseProcess struct {
 	BaseProcess
-	Height uint64		`field:height`
-	CompleteHeight uint64	`field:complete_height`
+	Height uint64			`json:"height"`
+	CompleteHeight uint64	`json:"complete_height"`
+	LastUpdateTime time.Time`json:"last_update_time"`
 }

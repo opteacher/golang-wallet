@@ -11,6 +11,7 @@ type Rpc interface {
 	GetDepositAmount() (map[string]float64, error)
 	GetBalance(address string) (float64, error)
 	SendFrom(from string, to string, amount float64) (string, error)
+	SendTo(from string, to string, amount float64, id int) (string, error)
 	GetNewAddress() (string, error)
 }
 
@@ -25,7 +26,7 @@ func GetRPC(name string) Rpc {
 }
 
 type RequestBody struct {
-	Method string			`json:method`
-	Params []interface{}	`json:params`
-	Id string				`json:id`
+	Method string			`json:"method"`
+	Params []interface{}	`json:"params"`
+	Id string				`json:"id"`
 }
