@@ -13,12 +13,12 @@ const (
 
 type BaseWithdraw struct {
 	Transaction
+	Id int
 	Address string
 }
 
 type DatabaseWithdraw struct {
 	BaseDeposit
-	Id int
 	Status int
 	UpdateTime time.Time
 }

@@ -91,7 +91,7 @@ func (service *withdrawService) waitForWithdraw() {
 		// 等待接收来自API的提币请求
 		var withdraw entities.BaseWithdraw
 		var ok bool
-		if withdraw, ok = <- revWithdrawSig; !ok {
+		if withdraw, ok = <- RevWithdrawSig; !ok {
 			break
 		}
 
@@ -138,6 +138,8 @@ func (service *withdrawService) sendTransactions() {
 			if wd.Height != 0 {
 				// 已经入链，发送给notify服务等待稳定
 				toNotifySig <- wd
+			} else {
+
 			}
 		}
 	}

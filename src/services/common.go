@@ -101,4 +101,4 @@ func TxIntoStable(txHash string, curHeight uint64) error {
 }
 
 var toNotifySig = make(chan entities.Transaction)
-var revWithdrawSig = make(chan entities.BaseWithdraw)
+var RevWithdrawSig = make(chan entities.BaseWithdraw)
