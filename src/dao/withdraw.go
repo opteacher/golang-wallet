@@ -3,9 +3,7 @@ package dao
 import (
 	"sync"
 	"entities"
-	"database/sql"
-	"databases"
-	"utils"
+	"unsafe"
 )
 
 type withdrawDao struct {
@@ -30,46 +28,19 @@ func (dao *withdrawDao) GetAllUnstable() ([]entities.DatabaseWithdraw, error) {
 	return []entities.DatabaseWithdraw {}, nil
 }
 
-func (dao *withdrawDao) NewWithdraw(withdraw entities.BaseWithdraw) (int64, error) {
-	var db *sql.DB
-	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
-	}
+func (dao *withdrawDao) GetMaxId() (int, error) {
+	return 0, nil
+}
 
-	var insertSQL string
-	var ok bool
-	if insertSQL, ok = dao.sqls["NewWithdraw"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, "NewWithdraw")
-	}
-
-	var result sql.Result
-	if result, err = db.Exec(insertSQL, []interface {} {
+func (d *withdrawDao) NewWithdraw(withdraw entities.BaseWithdraw) (int64, error) {
+	return insertTemplate((*baseDao)(unsafe.Pointer(d)), "NewWithdraw", []interface {} {
 		withdraw.Address,
 		withdraw.Amount,
 		withdraw.Asset,
-	}...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
-	}
-	return result.RowsAffected()
+	})
 }
 
-func (dao *withdrawDao) WithdrawIntoStable(txHash string) (int64, error) {
-	var db *sql.DB
-	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
-	}
-
-	var updateSQL string
-	var ok bool
-	if updateSQL, ok = dao.sqls["WithdrawIntoStable"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, "WithdrawIntoStable")
-	}
-
-	var result sql.Result
-	if result, err = db.Exec(updateSQL, txHash); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0021, err))
-	}
-	return result.RowsAffected()
+func (d *withdrawDao) WithdrawIntoStable(txHash string) (int64, error) {
+	return updateTemplate((*baseDao)(unsafe.Pointer(d)), "WithdrawIntoStable",
+		[]interface {} { txHash }, nil)
 }

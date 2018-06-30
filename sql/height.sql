@@ -5,9 +5,6 @@ CREATE TABLE IF NOT EXISTS height (
   PRIMARY KEY(asset)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
-# ChkExsAsset
-SELECT COUNT(asset) FROM height WHERE asset=?
-
 # AddAsset
 INSERT INTO height (asset) VALUES (?)
 
@@ -15,4 +12,4 @@ INSERT INTO height (asset) VALUES (?)
 SELECT height FROM height WHERE asset=?
 
 # UpdateHeight
-UPDATE height SET height=? WHERE asset=?
+UPDATE height SET %s WHERE asset=?

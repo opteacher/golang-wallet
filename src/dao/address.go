@@ -2,10 +2,8 @@ package dao
 
 import (
 	"sync"
-	"databases"
 	"database/sql"
-	"utils"
-	"errors"
+	"unsafe"
 )
 
 type addressDao struct {
@@ -26,68 +24,31 @@ func GetAddressDAO() *addressDao {
 	return _addressDao
 }
 
-func (dao *addressDao) newAddress(asset string, address string, inuse bool) (int64, error) {
-	var db *sql.DB
+func (d *addressDao) newAddress(asset string, address string, inuse bool) (int64, error) {
+	useSQL := "NewAddress"
+	if inuse { useSQL = "NewAddressInuse" }
+	props := []interface {} { asset, address }
+	return insertTemplate((*baseDao)(unsafe.Pointer(d)), useSQL, props)
+}
+
+func (d *addressDao) NewAddress(asset string, address string) (int64, error) {
+	return d.newAddress(asset, address, false)
+}
+
+func (d *addressDao) NewAddressInuse(asset string, address string) (int64, error) {
+	return d.newAddress(asset, address, true)
+}
+
+func (d *addressDao) FindInuseByAsset(asset string) ([]string, error) {
+	conds := []interface {} { asset }
+	var result []map[string]interface {}
 	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+	if result, err = selectTemplate((*baseDao)(unsafe.Pointer(d)), "FindByAsset", conds); err != nil {
+		return []string {}, err
 	}
-
-	var result sql.Result
-	var insertSQL string
-	var ok bool
-	var useSQL = "NewAddress"
-	if inuse {
-		useSQL = "NewAddressInuse"
+	var ret []string
+	for _, entity := range result {
+		ret = append(ret, string(*entity["address"].(*sql.RawBytes)))
 	}
-	if insertSQL, ok = dao.sqls[useSQL]; ok {
-		if result, err = db.Exec(insertSQL, asset, address); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0012, err))
-		}
-	} else {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, errors.New(useSQL))
-	}
-	return result.RowsAffected()
-}
-
-func (dao *addressDao) NewAddress(asset string, address string) (int64, error) {
-	return dao.newAddress(asset, address, false)
-}
-
-func (dao *addressDao) NewAddressInuse(asset string, address string) (int64, error) {
-	return dao.newAddress(asset, address, true)
-}
-
-func (dao *addressDao) FindInuseByAsset(asset string) ([]string, error) {
-	var db *sql.DB
-	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
-	}
-
-	var selectSQL string
-	var ok bool
-	if selectSQL, ok = dao.sqls["FindByAsset"]; !ok {
-		return []string {}, utils.LogIdxEx(utils.ERROR, 0011, errors.New("FindByAsset"))
-	}
-
-	var rows *sql.Rows
-	if rows, err = db.Query(selectSQL, asset); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
-	}
-	defer rows.Close()
-
-	var addresses []string
-	for rows.Next() {
-		var address string
-		if err = rows.Scan(&address); err != nil {
-			utils.LogIdxEx(utils.ERROR, 0014, err)
-			continue
-		}
-		addresses = append(addresses, address)
-	}
-	if err = rows.Err(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0014, err))
-	}
-	return addresses, nil
+	return ret, nil
 }

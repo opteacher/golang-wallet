@@ -3,10 +3,9 @@ package dao
 import (
 	"sync"
 	"database/sql"
-	"databases"
 	"entities"
+	"unsafe"
 	"time"
-	"utils"
 )
 
 type depositDao struct {
@@ -27,24 +26,7 @@ func GetDepositDAO() *depositDao {
 	return _depositDao
 }
 
-func (dao *depositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, error) {
-	var db *sql.DB
-	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
-	}
-
-	var result sql.Result
-	var insertSQL string
-	var ok bool
-	var useSQL = "AddScannedDeposit"
-	if deposit.CreateTime.Year() > 1000 {
-		useSQL = "AddDepositWithTime"
-	}
-	if insertSQL, ok = dao.sqls[useSQL]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, useSQL)
-	}
-
+func (d *depositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, error) {
 	var params = []interface {} {
 		deposit.TxHash,
 		deposit.Address,
@@ -53,32 +35,19 @@ func (dao *depositDao) AddScannedDeposit(deposit *entities.BaseDeposit) (int64, 
 		deposit.Height,
 		deposit.TxIndex,
 	}
-	if useSQL == "AddDepositWithTime" {
+	var useSQL = "AddScannedDeposit"
+	if deposit.CreateTime.Year() > 1000 {
+		useSQL = "AddDepositWithTime"
 		params = append(params, deposit.CreateTime)
 	}
-	if result, err = db.Exec(insertSQL, params...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
-	}
-	return result.RowsAffected()
+	return insertTemplate((*baseDao)(unsafe.Pointer(d)), useSQL, params)
 }
 
-func (dao *depositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, error) {
-	var db *sql.DB
-	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
-	}
-
-	var insertSQL string
-	var ok bool
+func (d *depositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, error) {
 	if deposit.CreateTime.Year() < 1000 {
 		deposit.CreateTime = time.Now()
 	}
-	if insertSQL, ok = dao.sqls["AddStableDeposit"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, "AddStableDeposit")
-	}
-
-	var params = []interface {} {
+	return insertTemplate((*baseDao)(unsafe.Pointer(d)), "AddStableDeposit", []interface {} {
 		deposit.TxHash,
 		deposit.Address,
 		deposit.Amount,
@@ -86,72 +55,33 @@ func (dao *depositDao) AddStableDeposit(deposit *entities.BaseDeposit) (int64, e
 		deposit.Height,
 		deposit.TxIndex,
 		deposit.CreateTime,
-	}
-	var result sql.Result
-	if result, err = db.Exec(insertSQL, params...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
-	}
-	return result.RowsAffected()
+	})
 }
 
-func (dao *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit, error) {
-	var db *sql.DB
+func (d *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit, error) {
+	bd := (*baseDao)(unsafe.Pointer(d))
+	conds := []interface {} { asset }
+	var result []map[string]interface {}
 	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+	if result, err = selectTemplate(bd, "GetUnstableDeposit", conds); err != nil {
+		return nil, err
 	}
 
-	var selectSQL string
-	var ok bool
-	if selectSQL, ok = dao.sqls["GetUnstableDeposit"]; !ok {
-		return nil, utils.LogIdxEx(utils.ERROR, 0011, "GetUnstableDeposit")
-	}
-
-	var rows *sql.Rows
-	if rows, err = db.Query(selectSQL, asset); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
-	}
-	defer rows.Close()
-
-	deposits := []entities.BaseDeposit {}
-	for rows.Next() {
+	var ret []entities.BaseDeposit
+	for _, entity := range result {
 		var deposit entities.BaseDeposit
-		if err = rows.Scan([]interface {} {
-			&deposit.TxHash,
-			&deposit.Address,
-			&deposit.Amount,
-			&deposit.Asset,
-			&deposit.Height,
-			&deposit.TxIndex,
-		}...); err != nil {
-			utils.LogIdxEx(utils.ERROR, 0014, err)
-			continue
-		}
-		deposits = append(deposits, deposit)
+		deposit.To = string(*entity["address"].(*sql.RawBytes))
+		deposit.Address = deposit.To
+		deposit.Amount = entity["amount"].(*sql.NullFloat64).Float64
+		deposit.Asset = asset
+		deposit.TxHash = string(*entity["tx_hash"].(*sql.RawBytes))
+		deposit.Height = uint64(entity["height"].(*sql.NullInt64).Int64)
+		deposit.TxIndex = int(entity["tx_index"].(*sql.NullInt64).Int64)
 	}
-
-	if err = rows.Err(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0014, err))
-	}
-	return deposits, nil
+	return ret, nil
 }
 
-func (dao *depositDao) DepositIntoStable(txHash string) (int64, error) {
-	var db *sql.DB
-	var err error
-	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
-	}
-
-	var updateSQL string
-	var ok bool
-	if updateSQL, ok = dao.sqls["DepositIntoStable"]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, "DepositIntoStable")
-	}
-
-	var result sql.Result
-	if result, err = db.Exec(updateSQL, txHash); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0021, err))
-	}
-	return result.RowsAffected()
+func (d *depositDao) DepositIntoStable(txHash string) (int64, error) {
+	return updateTemplate((*baseDao)(unsafe.Pointer(d)), "DepositIntoStable",
+		[]interface {} { txHash }, nil)
 }

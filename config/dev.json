@@ -1,7 +1,4 @@
 {
-	"server": {
-		"port": 8037
-	},
 	"db": {
 		"url": "",
 		"name": "test",

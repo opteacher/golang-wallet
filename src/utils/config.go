@@ -10,13 +10,17 @@ import (
 )
 
 type baseSetting struct {
-	Env string	`json:"env"`
+	Env string			`json:"env"`
+	Services []string	`json:"services"`
+	APIs struct {
+		RPC struct {
+			Active bool	`json:"active"`
+			Port int	`json:"port"`
+		}				`json:"rpc"`
+	}					`json:"apis"`
 }
 
 type subsSetting struct {
-	Server struct {
-		Port int		`json:"port"`
-	}					`json:"server"`
 	Db struct {
 		Url string		`json:"url"`
 		Name string		`json:"name"`

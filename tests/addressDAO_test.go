@@ -2,16 +2,14 @@ package tests
 
 import (
 	"dao"
-	"log"
 	"testing"
+	"fmt"
 )
 
-func TestAddressDAO(t *testing.T) {
-	log.SetFlags(log.Lshortfile)
+func TestNewAddressDAO(t *testing.T) {
+	fmt.Println(dao.GetAddressDAO().NewAddress("BTC", "0xabcd"))
+}
 
-	// Test DAO
-	addressDAO := dao.GetAddressDAO()
-	addressDAO.NewAddress("ETH", "0xabcd")
-	addressDAO.NewAddressInuse("BTC", "0x1234")
-	log.Println(addressDAO.FindInuseByAsset("BTC"))
+func TestFindAddressByAsset(t *testing.T) {
+	fmt.Println(dao.GetAddressDAO().FindInuseByAsset("ETH"))
 }

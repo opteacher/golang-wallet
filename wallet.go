@@ -3,19 +3,19 @@ package main
 import (
 	"os"
 	"utils"
-	"fmt"
-	"strings"
 	"services"
 	"unsafe"
-	"log"
+	"os/signal"
 	"net/http"
 	"apis"
-	"os/signal"
+	"log"
+	"fmt"
 )
 
 func initServices(svcs []*services.BaseService) {
 	for _, svc := range svcs {
 		svc.Init()
+		svc.Start()
 	}
 }
 
@@ -77,61 +77,33 @@ var withdrawServices = []*services.BaseService {
 }
 
 func main() {
-	cmdSet := utils.GetConfig().GetCmdsSettings()
-	subSet := utils.GetConfig().GetSubsSettings()
-	// 收集参数
-	args := make(map[string]string)
-	curArg := ""
-	for _, arg := range os.Args[1:] {
-		if arg[0] == '-' {
-			curArg = strings.ToLower(arg[1:])
-			args[curArg] = ""
-		} else {
-			args[curArg] = arg
-			curArg = ""
-		}
-	}
-	// 根据参数启动相应的配置
-	for key, val := range args {
-		switch key {
-		case "help":
-			if val == "" {
-				fmt.Println(cmdSet.Help)
-			} else {
-			}
-			return
-		case "version":
-			fmt.Println(cmdSet.Version)
-			return
-		case "service":
-			switch strings.ToLower(val) {
-			case "deposit":
-				initServices(depositServices)
-			case "collect":
-				initServices(collectServices)
-			case "withdraw":
-				initServices(withdrawServices)
-			case "all":
-				initServices(depositServices)
-				initServices(collectServices)
-				initServices(withdrawServices)
-			default:
-				utils.LogMsgEx(utils.WARNING, "找不到指定的服务：%s", val)
-			}
-		case "remote":
-			switch strings.ToLower(val) {
-			case "http":
-				fallthrough
-			default:
-				go func() {
-					utils.LogMsgEx(utils.INFO, "服务器监听于：%d", subSet.Server.Port)
-					http.HandleFunc("/", apis.RootHandler)
-					log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", subSet.Server.Port), nil))
-				}()
+	bsSet := utils.GetConfig().GetBaseSettings()
+
+	// 服务的初始化和启动
+	if len(bsSet.Services) == 0 {
+		initServices(depositServices)
+		initServices(collectServices)
+		initServices(withdrawServices)
+	} else {
+		for _, svc := range bsSet.Services {
+			switch svc {
+			case "deposit": initServices(depositServices)
+			case "collect": initServices(collectServices)
+			case "withdraw": initServices(withdrawServices)
 			}
 		}
 	}
-	// 启动服务器
 	runServices()
+
+	// API的初始化和监听
+	if bsSet.APIs.RPC.Active {
+		go func() {
+			utils.LogMsgEx(utils.INFO, "服务器监听于：%d", bsSet.APIs.RPC.Port)
+			http.HandleFunc("/", apis.RootHandler)
+			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", bsSet.APIs.RPC.Port), nil))
+		}()
+	}
+
+	// 退出清理
 	exitCtrl()
 }

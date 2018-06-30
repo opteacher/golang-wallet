@@ -19,7 +19,7 @@ INSERT INTO process (tx_hash, asset, `type`, height, current_height, complete_he
 UPDATE process SET %s WHERE tx_hash=?
 
 # CheckProcsExists
-SELECT COUNT(tx_hash) FROM process WHERE tx_hash=?
+SELECT tx_hash FROM process WHERE tx_hash=?
 
 # QueryProcess
 SELECT tx_hash, asset, `type`, height, current_height, complete_height, process, cancelable, last_update_time from process WHERE asset=? AND tx_hash=?

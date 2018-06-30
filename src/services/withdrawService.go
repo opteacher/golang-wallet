@@ -78,8 +78,10 @@ func (service *withdrawService) loadWithdrawUnsent() error {
 	for _, withdraw := range withdraws {
 		if withdraw.Status < entities.WITHDRAW_SENT {
 			service.wdsToSend = append(service.wdsToSend, entities.TurnToBaseWithdraw(&withdraw))
+			utils.LogMsgEx(utils.INFO, "加载提币请求进待发送列队：%v", withdraw)
 		} else if withdraw.Status < entities.WITHDRAW_INCHAIN {
 			service.wdsToInchain = append(service.wdsToInchain, withdraw)
+			utils.LogMsgEx(utils.INFO, "加载提币请求进待入链列队：%v", withdraw)
 		}
 	}
 	return nil
@@ -91,19 +93,21 @@ func (service *withdrawService) waitForWithdraw() {
 		// 等待接收来自API的提币请求
 		var withdraw entities.BaseWithdraw
 		var ok bool
-		if withdraw, ok = <- revWithdrawSig; !ok {
+		if withdraw, ok = <- RevWithdrawSig; !ok {
 			break
 		}
+		utils.LogMsgEx(utils.INFO, "接收到一笔待发送的提币：%v", withdraw)
 
 		// 持久化到数据库
 		if _, err = dao.GetWithdrawDAO().NewWithdraw(withdraw); err != nil {
 			utils.LogMsgEx(utils.ERROR, "新增提币请求失败：%v", err)
 			continue
 		}
+		utils.LogMsgEx(utils.INFO, "已持久化到数据库：%d", withdraw.Id)
 
 		// 保存到内存
 		service.wdsToSend = append(service.wdsToSend, withdraw)
-		utils.LogMsgEx(utils.INFO, "接收到一笔待发送的提币：%v", withdraw)
+		utils.LogMsgEx(utils.INFO, "进入待发送提币列队：%d", withdraw.Id)
 	}
 	service.status.TurnTo(DESTORY)
 }

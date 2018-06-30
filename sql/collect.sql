@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS collect (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 # AddSentCollect
-INSERT INTO collect (%s address, amount, asset) VALUES (%s ?, ?, ?)
+INSERT INTO collect (%s) VALUES (%s)

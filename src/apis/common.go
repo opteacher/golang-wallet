@@ -44,7 +44,7 @@ func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]ap
 		} else {
 			utils.LogIdxEx(utils.WARNING, 36, handle.Method, req.Method)
 			var resp RespVO
-			resp.Code = 404
+			resp.Code = 405
 			resp.Msg = fmt.Sprintf(utils.GetIdxMsg("W0036"), handle.Method, req.Method)
 			respJSON , _:= json.Marshal(resp)
 			w.Write(respJSON)

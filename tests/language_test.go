@@ -29,4 +29,7 @@ func TestLang(t *testing.T) {
 	var b = new(test)
 	a = b
 	fmt.Println(a.Test())
+
+	reflect.ArrayOf(10, reflect.TypeOf(test {}))
+	fmt.Println()
 }
