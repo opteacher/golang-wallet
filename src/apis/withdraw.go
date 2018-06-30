@@ -5,29 +5,28 @@ import (
 	"regexp"
 	"encoding/json"
 	"io/ioutil"
-	"entities"
-	"strings"
-	"dao"
 	"utils"
+	"entities"
 	"services"
+	"dao"
+	"strings"
 )
 
-const revWithdraw = "^/api/withdraw/([A-Z]{3,})"
-
-var wdRouteMap = map[string]api {
-	revWithdraw:	{ doWithdraw, "POST" },
+type withdrawReq struct {
+	Id int			`json:"id"`
+	Value float64	`json:"value"`
+	Target string	`json:"target"`
 }
 
-type withdrawReqBody struct {
-	Id int			`json:"id"`
-	Target string	`json:"target"`
-	Value float64	`json:"value"`
+const withdrawPath = "^/api/withdraw/([A-Z]{3,})"
 
+var wdRouteMap = map[string]api {
+	withdrawPath:	{ doWithdraw, "POST" },
 }
 
 func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
-	re := regexp.MustCompile(revWithdraw)
+	re := regexp.MustCompile(withdrawPath)
 	params := re.FindStringSubmatch(req.RequestURI)[1:]
 	if len(params) == 0 {
 		resp.Code = 500
@@ -48,9 +47,12 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 		return ret
 	}
 	defer req.Body.Close()
-	var wdReqBody withdrawReqBody
-	if err = json.Unmarshal(body, &wdReqBody); err != nil {
-		utils.LogMsgEx(utils.WARNING, "转换请求体JSON对象错误：%v", err)
+
+	utils.LogMsgEx(utils.INFO, "收到提币请求：%s", string(body))
+
+	var wdReq withdrawReq
+	if err = json.Unmarshal(body, &wdReq); err != nil {
+		utils.LogIdxEx(utils.WARNING, 38, err)
 		resp.Code = 500
 		resp.Msg = err.Error()
 		ret, _ := json.Marshal(resp)
@@ -59,7 +61,7 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 
 	// 参数判断
 	var wdToSvc entities.BaseWithdraw
-	if wdReqBody.Id == 0 {
+	if wdReq.Id == 0 {
 		// 没有指定提币id，从数据库中挑选最大的id值
 		if wdToSvc.Id, err = dao.GetWithdrawDAO().GetMaxId(); err != nil {
 			utils.LogMsgEx(utils.WARNING, "从数据库获取提币ID错误：%v", err)
@@ -70,27 +72,27 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 		}
 		wdToSvc.Id++
 	} else {
-		wdToSvc.Id = wdReqBody.Id
+		wdToSvc.Id = wdReq.Id
 	}
 	wdToSvc.Asset = strings.ToUpper(asset)
-	if wdReqBody.Value == 0 {
+	if wdReq.Value == 0 {
 		utils.LogMsgEx(utils.WARNING, "提币金额未指定", nil)
 		resp.Code = 400
 		resp.Msg = "提币金额未指定"
 		ret, _ := json.Marshal(resp)
 		return ret
 	} else {
-		wdToSvc.Amount = wdReqBody.Value
+		wdToSvc.Amount = wdReq.Value
 	}
-	if wdReqBody.Target == "" {
+	if wdReq.Target == "" {
 		utils.LogMsgEx(utils.WARNING, "提币目标地址不存在", nil)
 		resp.Code = 400
 		resp.Msg = "提币目标地址不存在"
 		ret, _ := json.Marshal(resp)
 		return ret
 	} else {
-		wdToSvc.Address = wdReqBody.Target
-		wdToSvc.To = wdReqBody.Target
+		wdToSvc.Address = wdReq.Target
+		wdToSvc.To = wdReq.Target
 	}
 	services.RevWithdrawSig <- wdToSvc
 	return []byte(string(wdToSvc.Id))

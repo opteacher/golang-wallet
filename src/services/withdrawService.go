@@ -142,6 +142,8 @@ func (service *withdrawService) sendTransactions() {
 			if wd.Height != 0 {
 				// 已经入链，发送给notify服务等待稳定
 				toNotifySig <- wd
+			} else {
+
 			}
 		}
 	}
