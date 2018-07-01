@@ -20,22 +20,22 @@ type baseDao struct {
 func (dao *baseDao) create(sqlFile string) error {
 	var err error
 	if dao.sqls, err = loadSQL(fmt.Sprintf("sql/%s.sql", sqlFile)); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0015, err))
+		panic(utils.LogIdxEx(utils.ERROR, 15, err))
 	}
 
 	var db *sql.DB
 	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 
 	var createSQL string
 	var ok bool
 	if createSQL, ok = dao.sqls["CreateTable"]; ok {
 		if _, err = db.Exec(createSQL); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0016, err))
+			panic(utils.LogIdxEx(utils.ERROR, 16, err))
 		}
 	} else {
-		return utils.LogIdxEx(utils.ERROR, 0011, errors.New("CreateTable"))
+		return utils.LogIdxEx(utils.ERROR, 11, errors.New("CreateTable"))
 	}
 	return nil
 }
@@ -44,7 +44,7 @@ func loadSQL(sqlFile string) (map[string]string, error) {
 	var file *os.File
 	var err error
 	if file, err = os.Open(sqlFile); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0017, err))
+		panic(utils.LogIdxEx(utils.ERROR, 17, err))
 	}
 	defer file.Close()
 
@@ -88,18 +88,18 @@ func insertTemplate(d *baseDao, sqlName string, props []interface {}) (int64, er
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 
 	var insertSQL string
 	var ok bool
 	if insertSQL, ok = d.sqls[sqlName]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, sqlName)
+		return 0, utils.LogIdxEx(utils.ERROR, 11, sqlName)
 	}
 
 	var result sql.Result
 	if result, err = db.Exec(insertSQL, props...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
+		panic(utils.LogIdxEx(utils.ERROR, 12, err))
 	}
 	return result.RowsAffected()
 }
@@ -111,33 +111,45 @@ func saveTemplate(d *baseDao,
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = d.sqls[selSqlName]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, selSqlName)
+		return 0, utils.LogIdxEx(utils.ERROR, 11, selSqlName)
 	}
 
 	var rows *sql.Rows
 	if rows, err = db.Query(selectSQL, conds...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
+		panic(utils.LogIdxEx(utils.ERROR, 13, err))
 	}
 	defer rows.Close()
 
 	var result sql.Result
 	if !rows.Next() {
-		var insertSQL string
-		var ok bool
-		if insertSQL, ok = d.sqls[istSqlName]; !ok {
-			return 0, utils.LogIdxEx(utils.ERROR, 0011, istSqlName)
-		}
+		if len(keys) != 0 {
+			if len(props) != len(keys) {
+				panic(utils.LogMsgEx(utils.ERROR, "键值无法一一对应", nil))
+			}
 
-		if result, err = db.Exec(insertSQL, props...); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0012, err))
+			params := make(map[string]interface {})
+			for i, k := range keys {
+				params[k] = props[i]
+			}
+			return insertPartsTemplate(d, istSqlName, params)
+		} else {
+			var insertSQL string
+			var ok bool
+			if insertSQL, ok = d.sqls[istSqlName]; !ok {
+				return 0, utils.LogIdxEx(utils.ERROR, 11, istSqlName)
+			}
+
+			if result, err = db.Exec(insertSQL, props...); err != nil {
+				panic(utils.LogIdxEx(utils.ERROR, 12, err))
+			}
+			return result.RowsAffected()
 		}
-		return result.RowsAffected()
 	} else {
 		if updSqlName == "" {
 			return 0, nil
@@ -148,7 +160,7 @@ func saveTemplate(d *baseDao,
 
 		var updateSQL string
 		if updateSQL, ok = d.sqls[updSqlName]; !ok {
-			return 0, utils.LogIdxEx(utils.ERROR, 0011, updSqlName)
+			return 0, utils.LogIdxEx(utils.ERROR, 11, updSqlName)
 		}
 
 		var content []string
@@ -157,8 +169,8 @@ func saveTemplate(d *baseDao,
 		}
 		updateSQL = fmt.Sprintf(updateSQL, strings.Join(content, ","))
 
-		if result, err = db.Exec(updateSQL, append(props, conds)...); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0012, err))
+		if result, err = db.Exec(updateSQL, append(props, conds...)...); err != nil {
+			panic(utils.LogIdxEx(utils.ERROR, 12, err))
 		}
 	}
 	return result.RowsAffected()
@@ -168,18 +180,18 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 
 	var selectSQL string
 	var ok bool
 	if selectSQL, ok = d.sqls[sqlName]; !ok {
-		return nil, utils.LogIdxEx(utils.ERROR, 0011, sqlName)
+		return nil, utils.LogIdxEx(utils.ERROR, 11, sqlName)
 	}
 
 	var rows *sql.Rows
 	if rows, err = db.Query(selectSQL, conds...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0013, err))
+		panic(utils.LogIdxEx(utils.ERROR, 13, err))
 	}
 	defer rows.Close()
 
@@ -188,7 +200,7 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 	for rows.Next() {
 		var colTyps []*sql.ColumnType
 		if colTyps, err = rows.ColumnTypes(); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0014, err))
+			panic(utils.LogIdxEx(utils.ERROR, 14, err))
 		}
 		var params []interface {}
 		for _, colTyp := range colTyps {
@@ -196,14 +208,14 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 			params = append(params, entity[colTyp.Name()])
 		}
 		if err = rows.Scan(params...); err != nil {
-			utils.LogIdxEx(utils.ERROR, 0014, err)
+			utils.LogIdxEx(utils.ERROR, 14, err)
 			continue
 		}
 		result = append(result, entity)
 	}
 
 	if err = rows.Err(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0014, err))
+		panic(utils.LogIdxEx(utils.ERROR, 14, err))
 	}
 	return result, nil
 }
@@ -212,19 +224,19 @@ func updateTemplate(d *baseDao, sqlName string, conds []interface {}, props map[
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 
 	var updateSQL string
 	var ok bool
 	if updateSQL, ok = d.sqls[sqlName]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, sqlName)
+		return 0, utils.LogIdxEx(utils.ERROR, 11, sqlName)
 	}
 
 	var result sql.Result
 	if props == nil || len(props) == 0 {
 		if result, err = db.Exec(updateSQL, conds...); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0021, err))
+			panic(utils.LogIdxEx(utils.ERROR, 21, err))
 		}
 		return result.RowsAffected()
 	}
@@ -238,22 +250,22 @@ func updateTemplate(d *baseDao, sqlName string, conds []interface {}, props map[
 
 	updateSQL = fmt.Sprintf(updateSQL, strings.Join(content, ","))
 	if result, err = db.Exec(updateSQL, append(values, conds...)...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0021, err))
+		panic(utils.LogIdxEx(utils.ERROR, 21, err))
 	}
 	return result.RowsAffected()
 }
 
-func insertObjectTemplate(d *baseDao, sqlName string, props map[string]interface {}) (int64, error) {
+func insertPartsTemplate(d *baseDao, sqlName string, props map[string]interface {}) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 
 	var insertSQL string
 	var ok bool
 	if insertSQL, ok = d.sqls[sqlName]; !ok {
-		return 0, utils.LogIdxEx(utils.ERROR, 0011, sqlName)
+		return 0, utils.LogIdxEx(utils.ERROR, 11, sqlName)
 	}
 
 	var keys []string
@@ -268,7 +280,7 @@ func insertObjectTemplate(d *baseDao, sqlName string, props map[string]interface
 	var result sql.Result
 	insertSQL = fmt.Sprintf(insertSQL, strings.Join(keys, ","), strings.Join(vals, ","))
 	if result, err = db.Exec(insertSQL, propts...); err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0012, err))
+		panic(utils.LogIdxEx(utils.ERROR, 12, err))
 	}
 	return result.RowsAffected()
 }

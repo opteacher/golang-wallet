@@ -3,34 +3,28 @@ package tests
 import (
 	"entities"
 	"dao"
-	"log"
 	"testing"
+	"fmt"
 )
 
-func TestProcessDAO(t *testing.T) {
-	log.SetFlags(log.Lshortfile)
-
-	var err error
-	var totalAffectRows int64
-
-	service := dao.GetProcessDAO()
-
+func TestInsertProcsDAO(t *testing.T) {
 	var processForAdd entities.DatabaseProcess
 	processForAdd.TxHash = "0xabcd"
 	processForAdd.Cancelable = true
 	processForAdd.Process = entities.AUDIT
 	processForAdd.Type = entities.WITHDRAW
-	if totalAffectRows, err = service.SaveProcess(&processForAdd); err != nil {
-		log.Fatal(err)
-	}
-	log.Println(totalAffectRows)
+	processForAdd.Asset = "ETH"
+	fmt.Println(dao.GetProcessDAO().SaveProcess(&processForAdd))
+}
 
+func TestUpdateProcsDAO(t *testing.T) {
 	var processForUpd entities.DatabaseProcess
 	processForUpd.TxHash = "0xabcd"
 	processForUpd.Height = 2000
 	processForUpd.Cancelable = true
-	if totalAffectRows, err = service.SaveProcess(&processForUpd); err != nil {
-		log.Fatal(err)
-	}
-	log.Println(totalAffectRows)
+	fmt.Println(dao.GetProcessDAO().SaveProcess(&processForUpd))
+}
+
+func TestQueryProcsDAO(t *testing.T) {
+	fmt.Println(dao.GetProcessDAO().QueryProcess("ETH", "0xabcd"))
 }

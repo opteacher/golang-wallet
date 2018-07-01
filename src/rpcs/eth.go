@@ -103,20 +103,20 @@ func (rpc *eth) sendRequest(method string, params []interface {}, id string) (Et
 	reqBody := RequestBody { method, params, id }
 	reqStr, err := json.Marshal(reqBody)
 	if err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0022, err))
+		panic(utils.LogIdxEx(utils.ERROR, 22, err))
 	}
 	utils.LogMsgEx(utils.DEBUG, fmt.Sprintf("Request body: %s", reqStr), nil)
 
 	reqBuf := bytes.NewBuffer([]byte(reqStr))
 	res, err := http.Post(rpc.callUrl, "application/json", reqBuf)
 	if err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0024, err))
+		panic(utils.LogIdxEx(utils.ERROR, 24, err))
 	}
 	defer res.Body.Close()
 
 	bodyStr, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0025, err))
+		panic(utils.LogIdxEx(utils.ERROR, 25, err))
 	}
 	utils.LogMsgEx(utils.DEBUG, fmt.Sprintf("Response body: %s", bodyStr), nil)
 
@@ -124,9 +124,9 @@ func (rpc *eth) sendRequest(method string, params []interface {}, id string) (Et
 	if err = json.Unmarshal(bodyStr, &resBody); err != nil {
 		var resError EthFailedResp
 		if err = json.Unmarshal(bodyStr, &resError); err != nil {
-			panic(utils.LogIdxEx(utils.ERROR, 0023, err))
+			panic(utils.LogIdxEx(utils.ERROR, 23, err))
 		} else {
-			return resBody, utils.LogIdxEx(utils.ERROR, 0026, errors.New(resError.Error.Message))
+			return resBody, utils.LogIdxEx(utils.ERROR, 26, errors.New(resError.Error.Message))
 		}
 	}
 	return resBody, nil
@@ -140,7 +140,7 @@ func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 	id := fmt.Sprintf("%d", rand.Intn(1000))
 	params := []interface{} { "0x" + strconv.FormatUint(uint64(height), 16), true }
 	if resp, err = rpc.sendRequest("eth_getBlockByNumber", params, id); err != nil {
-		return nil, utils.LogIdxEx(utils.ERROR, 0026, err)
+		return nil, utils.LogIdxEx(utils.ERROR, 26, err)
 	}
 
 	// 解析返回数据，提取交易
@@ -201,7 +201,7 @@ func (rpc *eth) GetCurrentHeight() (uint64, error) {
 	rand.Seed(time.Now().Unix())
 	id := fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("eth_blockNumber", []interface{} {}, id); err != nil {
-		return 0, utils.LogIdxEx(utils.ERROR, 0026, err)
+		return 0, utils.LogIdxEx(utils.ERROR, 26, err)
 	}
 	strHeight := resp.Result.(string)
 	if strHeight[0:2] == "0x" {

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS process (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 # AddProcess
-INSERT INTO process (tx_hash, asset, `type`, height, current_height, complete_height, process, cancelable) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO process (%s) VALUES (%s)
 
 # UpdateProcessByHash
 UPDATE process SET %s WHERE tx_hash=?

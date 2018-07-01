@@ -78,11 +78,18 @@ func (service *depositService) loadAddresses() error {
 func (service *depositService) getCurrentHeight() error {
 	coinSetting := utils.GetConfig().GetCoinSettings()
 	var err error
-	service.height, err = dao.GetHeightDAO().GetHeight(coinSetting.Name)
-	if service.height == 0 {
-		_, err = dao.GetHeightDAO().ChkOrAddAsset(coinSetting.Name)
+	var height int64
+	if height, err = dao.GetHeightDAO().GetHeight(coinSetting.Name); err != nil {
+		utils.LogMsgEx(utils.ERROR, "查询不到块高：%v", err)
+		return nil
 	}
-	return err
+	if height == 0 {
+		if _, err = dao.GetHeightDAO().ChkOrAddAsset(coinSetting.Name); err != nil {
+			return err
+		}
+	}
+	service.height = uint64(height)
+	return nil
 }
 
 func (service *depositService) startScanChain() {

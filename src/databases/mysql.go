@@ -22,7 +22,7 @@ func ConnectMySQL() (*sql.DB, error) {
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s?%s",
 		params.Username, params.Password, params.Url, params.Name, strings.Join(PARAMS, "&")))
 	if err != nil {
-		panic(utils.LogIdxEx(utils.ERROR, 0010, err))
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
 	return db, nil
 }

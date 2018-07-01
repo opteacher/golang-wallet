@@ -6,6 +6,8 @@ import (
 	"entities"
 	"unsafe"
 	"time"
+	"strconv"
+	"utils"
 )
 
 type depositDao struct {
@@ -72,11 +74,15 @@ func (d *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit, e
 		var deposit entities.BaseDeposit
 		deposit.To = string(*entity["address"].(*sql.RawBytes))
 		deposit.Address = deposit.To
-		deposit.Amount = entity["amount"].(*sql.NullFloat64).Float64
+		deposit.Amount, err = strconv.ParseFloat(string(*entity["amount"].(*sql.RawBytes)), 64)
+		if err != nil {
+			panic(utils.LogMsgEx(utils.ERROR, "解析交易金额失败：%v", err))
+		}
 		deposit.Asset = asset
 		deposit.TxHash = string(*entity["tx_hash"].(*sql.RawBytes))
-		deposit.Height = uint64(entity["height"].(*sql.NullInt64).Int64)
+		deposit.Height = uint64(*entity["height"].(*int32))
 		deposit.TxIndex = int(entity["tx_index"].(*sql.NullInt64).Int64)
+		ret = append(ret, deposit)
 	}
 	return ret, nil
 }

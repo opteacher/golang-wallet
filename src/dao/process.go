@@ -79,6 +79,6 @@ func (d *processDao) QueryProcess(asset string, txHash string) (entities.Databas
 	ret.CurrentHeight = uint64(entity["current_height"].(*sql.NullInt64).Int64)
 	ret.CompleteHeight = uint64(entity["complete_height"].(*sql.NullInt64).Int64)
 	ret.Process = string(*entity["process"].(*sql.RawBytes))
-	ret.Cancelable = entity["cancelable"].(*sql.NullBool).Bool
+	ret.Cancelable = *entity["cancelable"].(*int8) != 0
 	return ret, nil
 }

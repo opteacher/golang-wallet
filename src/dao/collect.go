@@ -31,5 +31,5 @@ func (d *collectDao) AddSentCollect(txHash string, asset string, address string,
 	if txHash != "" {
 		params["tx_hash"] = txHash
 	}
-	return insertObjectTemplate((*baseDao)(unsafe.Pointer(d)), "AddSentCollect", params)
+	return insertPartsTemplate((*baseDao)(unsafe.Pointer(d)), "AddSentCollect", params)
 }
