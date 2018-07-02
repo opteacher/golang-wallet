@@ -1,4 +1,4 @@
-package tests
+package dao
 
 import (
 	"entities"

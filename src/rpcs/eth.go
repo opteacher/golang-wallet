@@ -237,7 +237,7 @@ func (rpc *eth) GetDepositAmount() (map[string]float64, error) {
 	return addrAmount, nil
 }
 
-func (rpc *eth) SendFrom(from string, to string, amount float64) (string, error) {
+func (rpc *eth) sendTransaction(from string, to string, amount float64) (string, error) {
 	var err error
 	coinSet := utils.GetConfig().GetCoinSettings()
 
@@ -292,8 +292,12 @@ func (rpc *eth) SendFrom(from string, to string, amount float64) (string, error)
 	}
 }
 
-func (rpc *eth) SendTo(from string, to string, amount float64) (string, error) {
-	return "", nil
+func (rpc *eth) SendFrom(from string, amount float64) (string, error) {
+	return rpc.sendTransaction(from, utils.GetConfig().GetCoinSettings().Collect, amount)
+}
+
+func (rpc *eth) SendTo(to string, amount float64) (string, error) {
+	return rpc.sendTransaction(utils.GetConfig().GetCoinSettings().Withdraw, to, amount)
 }
 
 func (rpc *eth) GetBalance(address string) (float64, error) {

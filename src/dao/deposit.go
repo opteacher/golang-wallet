@@ -88,6 +88,6 @@ func (d *depositDao) GetUnstableDeposit(asset string) ([]entities.BaseDeposit, e
 }
 
 func (d *depositDao) DepositIntoStable(txHash string) (int64, error) {
-	return updateTemplate((*baseDao)(unsafe.Pointer(d)), "DepositIntoStable",
+	return updatePartsTemplate((*baseDao)(unsafe.Pointer(d)), "DepositIntoStable",
 		[]interface {} { txHash }, nil)
 }

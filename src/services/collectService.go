@@ -71,7 +71,7 @@ func (service *collectService) doCollect() {
 		for addr, balance := range addrAmount {
 			// 发起转账请求
 			var txHash string
-			if txHash, err = rpc.SendFrom(addr, coinSet.Collect, balance); err != nil {
+			if txHash, err = rpc.SendFrom(addr, balance); err != nil {
 				utils.LogMsgEx(utils.ERROR, "发送归集请求失败：%v", err)
 				err = nil
 				continue

@@ -18,7 +18,7 @@ type BaseWithdraw struct {
 }
 
 type DatabaseWithdraw struct {
-	BaseDeposit
+	BaseWithdraw
 	Status int
 	UpdateTime time.Time
 }

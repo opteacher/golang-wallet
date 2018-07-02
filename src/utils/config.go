@@ -39,7 +39,7 @@ type coinSetting struct {
 	CollectInterval time.Duration	`json:"collectInterval"`
 	TradePassword string			`json:"tradePassword"`
 	UnlockDuration int				`json:"unlockDuration"`
-	WithdrawAddress string			`json:"withdrawAddress"`
+	Withdraw string					`json:"withdraw"`
 }
 
 type msgsSetting struct {

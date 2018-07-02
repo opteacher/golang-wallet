@@ -3,10 +3,10 @@
 	"url": "http://18.144.17.127:8545",
 	"decimal": 8,
 	"stable": 12,
-	"collect": "",
+	"collect": "0xb78f085e2759baf782c705cd3a9fcb5d39fa7b3c",
 	"minCollect": 0.0001,
 	"collectInterval": 30,
 	"tradePassword": "FROM",
 	"unlockDuration": 20000,
-	"withdrawAddress": "0xacbcd"
+	"withdraw": "0x1c6f567e577a351917615fb1c8f1222dc96ba18d"
 }

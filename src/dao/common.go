@@ -220,7 +220,34 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 	return result, nil
 }
 
-func updateTemplate(d *baseDao, sqlName string, conds []interface {}, props map[string]interface{}) (int64, error) {
+func updateTemplate(d *baseDao, sqlName string, conds []interface {}, props []interface {}) (int64, error) {
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
+	}
+
+	var updateSQL string
+	var ok bool
+	if updateSQL, ok = d.sqls[sqlName]; !ok {
+		return 0, utils.LogIdxEx(utils.ERROR, 11, sqlName)
+	}
+
+	var result sql.Result
+	if props == nil || len(props) == 0 {
+		if result, err = db.Exec(updateSQL, conds...); err != nil {
+			panic(utils.LogIdxEx(utils.ERROR, 21, err))
+		}
+		return result.RowsAffected()
+	} else {
+		if result, err = db.Exec(updateSQL, append(props, conds...)...); err != nil {
+			panic(utils.LogIdxEx(utils.ERROR, 21, err))
+		}
+		return result.RowsAffected()
+	}
+}
+
+func updatePartsTemplate(d *baseDao, sqlName string, conds []interface {}, props map[string]interface{}) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {

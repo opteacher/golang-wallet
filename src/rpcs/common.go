@@ -10,8 +10,8 @@ type Rpc interface {
 	GetCurrentHeight() (uint64, error)
 	GetDepositAmount() (map[string]float64, error)
 	GetBalance(address string) (float64, error)
-	SendFrom(from string, to string, amount float64) (string, error)
-	SendTo(from string, to string, amount float64) (string, error)
+	SendFrom(from string, amount float64) (string, error)
+	SendTo(to string, amount float64) (string, error)
 	GetNewAddress() (string, error)
 	GetTransaction(txHash string) (entities.Transaction, error)
 }

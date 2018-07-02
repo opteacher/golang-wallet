@@ -51,5 +51,5 @@ func (d *heightDao) UpdateHeight(asset string, height uint64) (int64, error) {
 	props := map[string]interface {} {
 		"height": height,
 	}
-	return updateTemplate((*baseDao)(unsafe.Pointer(d)), "UpdateHeight", conds, props)
+	return updatePartsTemplate((*baseDao)(unsafe.Pointer(d)), "UpdateHeight", conds, props)
 }

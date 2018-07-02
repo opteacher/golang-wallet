@@ -63,14 +63,14 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	var wdToSvc entities.BaseWithdraw
 	if wdReq.Id == 0 {
 		// 没有指定提币id，从数据库中挑选最大的id值
-		if wdToSvc.Id, err = dao.GetWithdrawDAO().GetMaxId(); err != nil {
+		asset := utils.GetConfig().GetCoinSettings().Name
+		if wdToSvc.Id, err = dao.GetWithdrawDAO().GetAvailableId(asset); err != nil {
 			utils.LogMsgEx(utils.WARNING, "从数据库获取提币ID错误：%v", err)
 			resp.Code = 500
 			resp.Msg = err.Error()
 			ret, _ := json.Marshal(resp)
 			return ret
 		}
-		wdToSvc.Id++
 	} else {
 		wdToSvc.Id = wdReq.Id
 	}
@@ -95,5 +95,9 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 		wdToSvc.To = wdReq.Target
 	}
 	services.RevWithdrawSig <- wdToSvc
-	return []byte(string(wdToSvc.Id))
+
+	resp.Code = 200
+	resp.Data = wdToSvc.Id
+	ret, _ := json.Marshal(resp)
+	return []byte(ret)
 }

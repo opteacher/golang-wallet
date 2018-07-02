@@ -19,7 +19,7 @@ type withdrawService struct {
 	BaseService
 	sync.Once
 	wdsToSend []entities.BaseWithdraw
-	wdsToInchain []entities.DatabaseWithdraw
+	wdsToInchain []string
 }
 
 var _withdrawService *withdrawService
@@ -64,6 +64,8 @@ func (service *withdrawService) AfterTurn(s *utils.Status, srcStt int) {
 		go service.waitForWithdraw()
 		// 启动子协程发送请求
 		go service.sendTransactions()
+		// 启动子协程等待请求交易入链
+		go service.waitForInchain()
 		utils.LogMsgEx(utils.INFO, "started", nil)
 	}
 }
@@ -71,7 +73,8 @@ func (service *withdrawService) AfterTurn(s *utils.Status, srcStt int) {
 func (service *withdrawService) loadWithdrawUnsent() error {
 	var withdraws []entities.DatabaseWithdraw
 	var err error
-	if withdraws, err = dao.GetWithdrawDAO().GetAllUnstable(); err != nil {
+	asset := utils.GetConfig().GetCoinSettings().Name
+	if withdraws, err = dao.GetWithdrawDAO().GetAllUnstable(asset); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "获取未发送的提币交易失败：%v", err)
 	}
 
@@ -80,7 +83,7 @@ func (service *withdrawService) loadWithdrawUnsent() error {
 			service.wdsToSend = append(service.wdsToSend, entities.TurnToBaseWithdraw(&withdraw))
 			utils.LogMsgEx(utils.INFO, "加载提币请求进待发送列队：%v", withdraw)
 		} else if withdraw.Status < entities.WITHDRAW_INCHAIN {
-			service.wdsToInchain = append(service.wdsToInchain, withdraw)
+			service.wdsToInchain = append(service.wdsToInchain, withdraw.TxHash)
 			utils.LogMsgEx(utils.INFO, "加载提币请求进待入链列队：%v", withdraw)
 		}
 	}
@@ -99,7 +102,7 @@ func (service *withdrawService) waitForWithdraw() {
 		utils.LogMsgEx(utils.INFO, "接收到一笔待发送的提币：%v", withdraw)
 
 		// 持久化到数据库
-		if _, err = dao.GetWithdrawDAO().NewWithdraw(withdraw); err != nil {
+		if _, err = dao.GetWithdrawDAO().RecvNewWithdraw(withdraw); err != nil {
 			utils.LogMsgEx(utils.ERROR, "新增提币请求失败：%v", err)
 			continue
 		}
@@ -113,15 +116,14 @@ func (service *withdrawService) waitForWithdraw() {
 }
 
 func (service *withdrawService) sendTransactions() {
+	asset := utils.GetConfig().GetCoinSettings().Name
+	rpc := rpcs.GetRPC(asset)
 	var err error
 	for err == nil && service.status.Current() == START {
-		wdAddr := utils.GetConfig().GetCoinSettings().WithdrawAddress
-		asset := utils.GetConfig().GetCoinSettings().Name
-		rpc := rpcs.GetRPC(asset)
-		for _, withdraw := range service.wdsToSend {
+		for i, withdraw := range service.wdsToSend {
 			// 发送提币转账请求
 			var txHash string
-			if txHash, err = rpc.SendTo(wdAddr, withdraw.Address, withdraw.Amount); err != nil {
+			if txHash, err = rpc.SendTo(withdraw.Address, withdraw.Amount); err != nil {
 				utils.LogMsgEx(utils.ERROR, "发送提币请求失败：%v", err)
 				err = nil // 如果发送失败，重复尝试
 				continue
@@ -131,19 +133,50 @@ func (service *withdrawService) sendTransactions() {
 				err = errors.New("empty tx hash")
 				continue
 			}
+			utils.LogMsgEx(utils.INFO, "提币请求已发送，收到交易ID：%s", txHash)
 
+			// 如果发送成功，立刻删除这笔提币请求（以防重复发提币）
+			service.wdsToSend = append(service.wdsToSend[:i], service.wdsToSend[i + 1:]...)
+
+			// 持久化到数据库
+			if _, err = dao.GetWithdrawDAO().SentForTxHash(txHash, withdraw.Id); err != nil {
+				utils.LogMsgEx(utils.ERROR, "持久化到数据库失败：%v", err)
+				continue
+			}
+			utils.LogMsgEx(utils.INFO, "交易：%s已持久化", txHash)
+
+			// 插入待入链列表
+			service.wdsToInchain = append(service.wdsToInchain, withdraw.TxHash)
+		}
+	}
+	service.status.TurnTo(DESTORY)
+}
+
+func (service *withdrawService) waitForInchain() {
+	asset := utils.GetConfig().GetCoinSettings().Name
+	rpc := rpcs.GetRPC(asset)
+	var err error
+	for err == nil && service.status.Current() == START {
+		for i, txHash := range service.wdsToInchain {
 			// 检查交易的块高
 			var wd entities.Transaction
 			if wd, err = rpc.GetTransaction(txHash); err != nil {
-				utils.LogMsgEx(utils.ERROR, "获取不到刚刚发送的交易：%v", err)
+				utils.LogMsgEx(utils.ERROR, "获取不到指定的交易：%v", err)
 				continue
 			}
 
+			// 如果已经入链，发送给notify服务等待稳定
 			if wd.Height != 0 {
-				// 已经入链，发送给notify服务等待稳定
-				toNotifySig <- wd
-			} else {
+				// 更新状态
+				if _, err = dao.GetWithdrawDAO().WithdrawIntoChain(txHash, wd.Height, wd.TxIndex); err != nil {
+					utils.LogMsgEx(utils.ERROR, "持久化到数据库失败：%v", err)
+					continue
+				}
 
+				// 同样，一旦发送给待稳定服务，立刻从列表中删除
+				service.wdsToInchain = append(service.wdsToInchain[:i], service.wdsToInchain[i + 1:]...)
+
+				toNotifySig <- wd
 			}
 		}
 	}
