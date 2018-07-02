@@ -29,11 +29,11 @@ func GetWithdrawDAO() *withdrawDao {
 	return _withdrawDao
 }
 
-func (d *withdrawDao) GetAllUnstable(asset string) ([]entities.DatabaseWithdraw, error) {
+func (d *withdrawDao) getWithdraws(asset string, sqlName string) ([]entities.DatabaseWithdraw, error) {
 	var result []map[string]interface {}
 	var err error
 	conds := []interface {} { asset }
-	if result, err = selectTemplate((*baseDao)(unsafe.Pointer(d)), "GetAllUnstable", conds); err != nil {
+	if result, err = selectTemplate((*baseDao)(unsafe.Pointer(d)), sqlName, conds); err != nil {
 		return nil, utils.LogIdxEx(utils.ERROR, 39, err)
 	}
 
@@ -56,6 +56,14 @@ func (d *withdrawDao) GetAllUnstable(asset string) ([]entities.DatabaseWithdraw,
 		ret = append(ret, bwd)
 	}
 	return ret, nil
+}
+
+func (d *withdrawDao) GetUnfinishWithdraw(asset string) ([]entities.DatabaseWithdraw, error) {
+	return d.getWithdraws(asset, "GetUnfinishWithdraw")
+}
+
+func (d *withdrawDao) GetUnstableWithdraw(asset string) ([]entities.DatabaseWithdraw, error) {
+	return d.getWithdraws(asset, "GetUnstableWithdraw")
 }
 
 func (d *withdrawDao) GetAvailableId(asset string) (int, error) {

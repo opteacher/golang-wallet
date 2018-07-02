@@ -28,5 +28,8 @@ UPDATE withdraw SET status=3, %s WHERE tx_hash=?
 # GetAvailableId
 SELECT MAX(id) + 1 AS new_id FROM withdraw WHERE asset=?
 
-# GetAllUnstable
-SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE asset=?
+# GetUnstableWithdraw
+SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE asset=? AND status=3
+
+# GetUnfinishWithdraw
+SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE asset=? AND status >= 1 AND status < 3

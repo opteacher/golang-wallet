@@ -88,7 +88,7 @@ func logMsgEx(level int, msg string, detail ...interface {}) error {
 	if len(detail) > 1 {
 		return procsDetail(msg)
 	} else {
-		return procsDetail(detail)
+		return procsDetail(detail[0])
 	}
 }
 

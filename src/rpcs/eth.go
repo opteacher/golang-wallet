@@ -79,6 +79,9 @@ func (rpc *eth) strProp(tx map[string]interface{}, key string) (string, error) {
 	if itfc, ok = tx[key]; !ok {
 		return "", utils.LogMsgEx(utils.ERROR, "交易未包含所需字段：%s", key)
 	}
+	if itfc == nil {
+		return "", utils.LogMsgEx(utils.WARNING, "字段：%s为nil", key)
+	}
 	return itfc.(string), nil
 }
 
@@ -129,7 +132,10 @@ func (rpc *eth) sendRequest(method string, params []interface {}, id string) (Et
 			return resBody, utils.LogIdxEx(utils.ERROR, 26, errors.New(resError.Error.Message))
 		}
 	}
-	return resBody, nil
+	if resBody.Result == nil {
+		err = utils.LogIdxEx(utils.ERROR, 40, nil)
+	}
+	return resBody, err
 }
 
 func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
@@ -204,7 +210,7 @@ func (rpc *eth) GetCurrentHeight() (uint64, error) {
 		return 0, utils.LogIdxEx(utils.ERROR, 26, err)
 	}
 	strHeight := resp.Result.(string)
-	if strHeight[0:2] == "0x" {
+	if strHeight[:2] == "0x" {
 		strHeight = strHeight[2:]
 	}
 	return strconv.ParseUint(strHeight, 16, 64)
@@ -344,7 +350,28 @@ func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
 		return tx, utils.LogIdxEx(utils.ERROR, 37, err)
 	}
 	result := resp.Result.(map[string]interface {})
-	fmt.Println(result)
 
+	var numTmp *big.Int
+	tx.TxHash = txHash
+	tx.Asset = "ETH"
+	if numTmp, err = rpc.numProp(result, "blockNumber"); err != nil {
+		tx.Height = 0
+	} else {
+		tx.Height = numTmp.Uint64()
+	}
+	if numTmp, err = rpc.numProp(result, "transactionIndex"); err != nil {
+		tx.TxIndex = -1
+	} else {
+		tx.TxIndex = int(numTmp.Int64())
+	}
+	tx.From = result["from"].(string)
+	tx.To = result["to"].(string)
+	tx.BlockHash = result["blockHash"].(string)
+	if numTmp, err = rpc.numProp(result, "value"); err != nil {
+		return tx, utils.LogIdxEx(utils.ERROR, 41, err)
+	}
+	fltTmp := big.NewFloat(0)
+	fltTmp.SetInt(numTmp.Div(numTmp, big.NewInt(int64(math.Pow10(rpc.decimal)))))
+	tx.Amount, _ = fltTmp.Float64()
 	return tx, nil
 }

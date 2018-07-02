@@ -11,7 +11,7 @@ import (
 /***
 	通知服务：接收来自充值和提币的交易，等待其稳定后做后续操作
 	子协程（startWaitForStable）：等待交易进入稳定状态
-	子协程（waitForUnstableDeposit）：等待来自充值和提币的交易
+	子协程（waitForUnstableTransaction）：等待来自充值和提币的交易
  */
 type notifyService struct {
 	BaseService
@@ -60,7 +60,7 @@ func (service *notifyService) AfterTurn(s *utils.Status, srcStt int) {
 		// 开启协程等待充币交易稳定
 		go service.startWaitForStable()
 		// 开启协程等待接收充币服务发来的交易
-		go service.waitForUnstableDeposit()
+		go service.waitForUnstableTransaction()
 		utils.LogMsgEx(utils.INFO, "started", nil)
 	}
 }
@@ -72,18 +72,27 @@ func (service *notifyService) loadIncompleteDeposits() error  {
 	if deposits, err = dao.GetDepositDAO().GetUnstableDeposit(coinSetting.Name); err != nil {
 		return err
 	}
+	var withdraws []entities.DatabaseWithdraw
+	if withdraws, err = dao.GetWithdrawDAO().GetUnstableWithdraw(coinSetting.Name); err != nil {
+		return err
+	}
 	for _, deposit := range deposits {
+		utils.LogMsgEx(utils.INFO, "发现一笔待稳定的充值记录：%s", deposit.TxHash)
 		service.waitForStableTxs = append(service.waitForStableTxs, deposit.Transaction)
+	}
+	for _, withdraw := range withdraws {
+		utils.LogMsgEx(utils.INFO, "发现一笔待稳定的提币记录：%s", withdraw.TxHash)
+		service.waitForStableTxs = append(service.waitForStableTxs, withdraw.Transaction)
 	}
 	return err
 }
 
 func (service *notifyService) startWaitForStable() {
 	var err error
+	coinSet := utils.GetConfig().GetCoinSettings()
 	for err == nil && service.status.Current() == START {
 		//如果达到协程上限，则等待
-		coinSet := utils.GetConfig().GetCoinSettings()
-		for _, tx := range service.waitForStableTxs {
+		for i, tx := range service.waitForStableTxs {
 			// 获取当前块高
 			var curHeight uint64
 			if curHeight, err = rpcs.GetRPC(coinSet.Name).GetCurrentHeight(); err != nil {
@@ -92,8 +101,12 @@ func (service *notifyService) startWaitForStable() {
 			}
 
 			stableHeight := uint64(coinSet.Stable)
-			if tx.Height + stableHeight >= curHeight {
+			if curHeight >= tx.Height + stableHeight {
+				service.waitForStableTxs = append(service.waitForStableTxs[:i],
+					service.waitForStableTxs[i + 1:]...)
+
 				if err = TxIntoStable(tx.TxHash, curHeight); err != nil {
+					service.waitForStableTxs = append(service.waitForStableTxs, tx)
 					continue
 				}
 			}
@@ -102,7 +115,7 @@ func (service *notifyService) startWaitForStable() {
 	service.status.TurnTo(DESTORY)
 }
 
-func (service *notifyService) waitForUnstableDeposit() {
+func (service *notifyService) waitForUnstableTransaction() {
 	var err error
 	for err == nil && service.status.Current() == START {
 		var tx entities.Transaction
