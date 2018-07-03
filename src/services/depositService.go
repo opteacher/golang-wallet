@@ -164,7 +164,6 @@ func (service *depositService) startScanChain() {
 			}
 			utils.LogMsgEx(utils.INFO, "块高更新到：%d", service.height)
 		}
-
 		service.height++
 	}
 	close(toNotifySig)

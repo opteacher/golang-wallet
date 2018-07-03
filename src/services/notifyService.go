@@ -17,6 +17,7 @@ type notifyService struct {
 	BaseService
 	sync.Once
 	waitForStableTxs []entities.Transaction
+	waitForStableTxsLock *sync.Mutex
 }
 
 var _notifyService *notifyService
@@ -35,6 +36,7 @@ func GetNotifyService() *notifyService {
 func (service *notifyService) create() error {
 	service.name = "notifyService"
 	service.status.RegAsObs(service)
+	service.waitForStableTxsLock = new(sync.Mutex)
 	return service.BaseService.create()
 }
 
@@ -44,8 +46,8 @@ func (service *notifyService) BeforeTurn(s *utils.Status, tgtStt int) {
 	case INIT:
 		utils.LogMsgEx(utils.INFO, "initialization", nil)
 		// 加载数据库中所有未稳定的充币交易
-		if err = service.loadIncompleteDeposits(); err != nil {
-			panic(utils.LogMsgEx(utils.ERROR, "加载未完成的充币失败：%v", err))
+		if err = service.loadIncompleteTransactions(); err != nil {
+			panic(utils.LogMsgEx(utils.ERROR, "加载未完成的交易失败：%v", err))
 		}
 	case START:
 		utils.LogMsgEx(utils.INFO, "start", nil)
@@ -65,7 +67,7 @@ func (service *notifyService) AfterTurn(s *utils.Status, srcStt int) {
 	}
 }
 
-func (service *notifyService) loadIncompleteDeposits() error  {
+func (service *notifyService) loadIncompleteTransactions() error  {
 	coinSetting := utils.GetConfig().GetCoinSettings()
 	var err error
 	var deposits []entities.BaseDeposit
@@ -92,6 +94,7 @@ func (service *notifyService) startWaitForStable() {
 	coinSet := utils.GetConfig().GetCoinSettings()
 	for err == nil && service.status.Current() == START {
 		//如果达到协程上限，则等待
+		service.waitForStableTxsLock.Lock()
 		for i, tx := range service.waitForStableTxs {
 			// 获取当前块高
 			var curHeight uint64
@@ -102,15 +105,21 @@ func (service *notifyService) startWaitForStable() {
 
 			stableHeight := uint64(coinSet.Stable)
 			if curHeight >= tx.Height + stableHeight {
-				service.waitForStableTxs = append(service.waitForStableTxs[:i],
-					service.waitForStableTxs[i + 1:]...)
+				utils.LogMsgEx(utils.INFO, "交易：%s已进入稳定状态", tx.TxHash)
 
 				if err = TxIntoStable(tx.TxHash, curHeight); err != nil {
 					service.waitForStableTxs = append(service.waitForStableTxs, tx)
 					continue
 				}
+
+				service.waitForStableTxs = append(service.waitForStableTxs[:i], service.waitForStableTxs[i + 1:]...)
+				break
+			} else {
+				utils.LogMsgEx(utils.INFO, "交易：%s等待稳定，%d/%d",
+					tx.TxHash, curHeight, tx.Height + stableHeight)
 			}
 		}
+		service.waitForStableTxsLock.Unlock()
 	}
 	service.status.TurnTo(DESTORY)
 }
@@ -123,10 +132,12 @@ func (service *notifyService) waitForUnstableTransaction() {
 		if tx, ok = <- toNotifySig; !ok {
 			break
 		}
-		utils.LogMsgEx(utils.INFO, "接收到一笔需等待的充币：%v", tx)
+		utils.LogMsgEx(utils.INFO, "接收到一笔需等待的交易：%v", tx)
 
+		service.waitForStableTxsLock.Lock()
 		service.waitForStableTxs = append(service.waitForStableTxs, tx)
-		utils.LogMsgEx(utils.INFO, "充币交易（%s）已处于等待状态", tx.TxHash)
+		service.waitForStableTxsLock.Unlock()
+		utils.LogMsgEx(utils.INFO, "交易（%s）已处于等待状态", tx.TxHash)
 	}
 	service.status.TurnTo(DESTORY)
 }

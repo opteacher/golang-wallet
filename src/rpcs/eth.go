@@ -80,7 +80,7 @@ func (rpc *eth) strProp(tx map[string]interface{}, key string) (string, error) {
 		return "", utils.LogMsgEx(utils.ERROR, "交易未包含所需字段：%s", key)
 	}
 	if itfc == nil {
-		return "", utils.LogMsgEx(utils.WARNING, "字段：%s为nil", key)
+		return "", nil// utils.LogMsgEx(utils.WARNING, "字段：%s为nil", key)
 	}
 	return itfc.(string), nil
 }
@@ -91,6 +91,9 @@ func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Int, error)
 	var strTmp string
 	if strTmp, err = rpc.strProp(tx, key); err != nil {
 		return numTmp, err
+	}
+	if len(strTmp) == 0 {
+		return numTmp, nil
 	}
 	if strTmp[:2] == "0x" {
 		strTmp = strTmp[2:]

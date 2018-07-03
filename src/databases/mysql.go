@@ -7,6 +7,7 @@ import (
 	"utils"
 	"strings"
 	"net/url"
+	"time"
 )
 
 var PARAMS = []string {
@@ -23,6 +24,10 @@ func ConnectMySQL() (*sql.DB, error) {
 		params.Username, params.Password, params.Url, params.Name, strings.Join(PARAMS, "&")))
 	if err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
+	}
+	// 如果超出最大连接数，等待可用的连接
+	for db.Stats().OpenConnections >= config.GetSubsSettings().Db.MaxConn {
+		time.Sleep(5 * time.Second)
 	}
 	return db, nil
 }

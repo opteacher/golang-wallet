@@ -32,4 +32,8 @@ func TestLang(t *testing.T) {
 
 	reflect.ArrayOf(10, reflect.TypeOf(test {}))
 	fmt.Println()
+
+	abcd := []int {1}
+	abcd = append(abcd[:0], abcd[1:]...)
+	fmt.Println(abcd)
 }
