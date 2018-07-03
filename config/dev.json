@@ -3,15 +3,15 @@
 		"url": "",
 		"name": "test",
 		"username": "root",
-		"password": "12345",
+		"password": "59524148chenOP",
 		"max_conn": 20
 	},
 	"redis": {
-		"password": "",
+		"password": "359062",
 		"clusters": [
 			{
 				"name": "main",
-				"url": "127.0.0.1:6379"
+				"url": "101.132.121.47:6379"
 			}
 		]
 	}
