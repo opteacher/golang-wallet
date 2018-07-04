@@ -79,21 +79,24 @@ func GetInitedServices() []*BaseService {
 	return svcs
 }
 
-func TxIntoStable(process entities.DatabaseProcess, curHeight uint64) error {
+func TxIntoStable(txHash string, asset string) error {
 	var err error
-	if _, err = dao.GetDepositDAO().DepositIntoStable(process.TxHash); err != nil {
+	if _, err = dao.GetDepositDAO().DepositIntoStable(txHash); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "更新充币记录失败：%v", err)
 	}
-	if _, err = dao.GetWithdrawDAO().WithdrawIntoStable(process.TxHash); err != nil {
+	if _, err = dao.GetWithdrawDAO().WithdrawIntoStable(txHash); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "更新充币记录失败：%v", err)
 	}
 
+	var process entities.DatabaseProcess
+	process.Asset = asset
+	process.TxHash = txHash
 	process.Process = entities.FINISH
 	if _, err = dao.GetProcessDAO().SaveProcess(&process); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "插入/更新进度表失败：%v", err)
 	}
 
-	utils.LogMsgEx(utils.INFO, "交易完成：%s", process.TxHash)
+	utils.LogMsgEx(utils.INFO, "交易完成：%s", txHash)
 	return nil
 }
 

@@ -25,6 +25,12 @@ func GetHeightService() *heightService {
 	return _heightService
 }
 
+func (service *heightService) create() error {
+	service.name = "withdrawService"
+	service.status.RegAsObs(service)
+	return service.BaseService.create()
+}
+
 func (service *heightService) BeforeTurn(s *utils.Status, tgtStt int) {
 	switch tgtStt {
 	case INIT:

@@ -21,7 +21,7 @@ type withdrawReq struct {
 const withdrawPath = "^/api/withdraw/([A-Z]{3,})"
 
 var wdRouteMap = map[string]api {
-	withdrawPath:	{ doWithdraw, "POST" },
+	withdrawPath:	{ doWithdraw, http.MethodPost },
 }
 
 func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {

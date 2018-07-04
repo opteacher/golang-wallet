@@ -11,8 +11,8 @@ const newAddressPath	= "^/api/deposit/([A-Z]{3,})/address$"
 const getHeightPath		= "^/api/deposit/([A-Z]{3,})/height$"
 
 var dpRouteMap = map[string]api {
-	newAddressPath:	{ newAddress, "GET" },
-	getHeightPath:	{ queryHeight, "GET"},
+	newAddressPath:	{ newAddress, http.MethodGet },
+	getHeightPath:	{ queryHeight, http.MethodGet },
 }
 
 func newAddress(w http.ResponseWriter, req *http.Request) []byte {

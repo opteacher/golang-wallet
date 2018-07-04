@@ -115,15 +115,11 @@ func (service *withdrawService) waitForWithdraw() {
 		if _, err = dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
 			BaseProcess: entities.BaseProcess {
 				Id: withdraw.Id,
-				TxHash: "",
 				Asset: withdraw.Asset,
 				Type: entities.WITHDRAW,
 				Process: entities.LOAD,
 				Cancelable: true,
 			},
-			Height: 0,
-			CurrentHeight: 0,
-			CompleteHeight: 0,
 			LastUpdateTime: time.Now(),
 		}); err != nil {
 			utils.LogMsgEx(utils.ERROR, "新增提币请求失败：%v", err)

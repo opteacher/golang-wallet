@@ -156,7 +156,7 @@ func (service *depositService) startScanChain() {
 			if deposit.Height + uint64(coinSet.Stable) >= curHeight {
 				utils.LogMsgEx(utils.INFO, "交易（%s）进入稳定状态", deposit.TxHash)
 
-				if err = TxIntoStable(tx.TxHash, tx.Asset, curHeight); err != nil {
+				if err = TxIntoStable(tx.TxHash, tx.Asset); err != nil {
 					utils.LogMsgEx(utils.ERROR, "插入稳定交易记录失败：%v", err)
 					continue
 				}

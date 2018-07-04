@@ -41,14 +41,53 @@ func GetProcessDAO() *processDao {
 }
 
 func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, error) {
+	if process.Asset == "" {
+		return 0, utils.LogMsgEx(utils.ERROR, "保存进度的时候需指定币种", nil)
+	}
+
 	var cli redis.Cmdable
 	var err error
 	if cli, err = databases.ConnectRedis(); err != nil {
 		return 0, utils.LogIdxEx(utils.ERROR, 42, err)
 	}
 
-	key := fmt.Sprintf("process_%s_%d", process.Asset, process.Id)
+	var key string
+	if process.TxHash != "" {
+		key = fmt.Sprintf("process_%s_%s", process.Asset, process.TxHash)
+		var n int64
+		k := fmt.Sprintf("process_%s_%s_%d", process.Asset, process.Type, process.Id)
+		if n, err = cli.Exists(k).Result(); n > 0 {
+			if process.Id == 0 {
+				var id uint64
+				id, _ = cli.HGet(k, "id").Uint64()
+				process.Id = int(id)
+			}
+			if process.Process == "" {
+				process.Process, _ = cli.HGet(k, "process").Result()
+			}
+			if process.Height == 0 {
+				process.Height, _ = cli.HGet(k, "height").Uint64()
+			}
+			if process.CurrentHeight == 0 {
+				process.CurrentHeight, _ = cli.HGet(k, "current_height").Uint64()
+			}
+			if process.CompleteHeight == 0 {
+				process.CompleteHeight, _ = cli.HGet(k, "complete_height").Uint64()
+			}
+			cli.Del(k)
+		}
+	} else {
+		if process.Type == "" || process.Id == 0 {
+			return 0, utils.LogMsgEx(utils.ERROR, "未指定哈希、类型和ID", nil)
+		}
+		key = fmt.Sprintf("process_%s_%s_%d", process.Asset, process.Type, process.Id)
+	}
 
+	if process.Id != 0 {
+		if err = cli.HSet(key, "id", process.Id).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置id失败：%v", err)
+		}
+	}
 	if process.TxHash != "" {
 		if err = cli.HSet(key, "tx_hash", process.TxHash).Err(); err != nil {
 			return 0, utils.LogMsgEx(utils.ERROR, "设置tx_hash失败：%v", err)
@@ -100,7 +139,15 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 	return 1, nil
 }
 
-func (d *processDao) QueryProcess(asset string, id int) (entities.DatabaseProcess, error) {
+func (d *processDao) QueryProcessByTypAndId(asset string, typ string, id int) (entities.DatabaseProcess, error) {
+	return d.queryProcess(fmt.Sprintf("process_%s_%s_%d", asset, typ, id))
+}
+
+func (d *processDao) QueryProcessByTxHash(asset string, txHash string) (entities.DatabaseProcess, error) {
+	return d.queryProcess(fmt.Sprintf("process_%s_%s", asset, txHash))
+}
+
+func (d *processDao) queryProcess(key string) (entities.DatabaseProcess, error) {
 	var ret entities.DatabaseProcess
 	var cli redis.Cmdable
 	var err error
@@ -108,9 +155,9 @@ func (d *processDao) QueryProcess(asset string, id int) (entities.DatabaseProces
 		return ret, utils.LogIdxEx(utils.ERROR, 42, err)
 	}
 
-	key := fmt.Sprintf("process_%s_%d", asset, id)
-
-	ret.Id					= id
+	var id int64
+	id, err					= cli.HGet(key, "id").Int64()
+	ret.Id					= int(id)
 	ret.TxHash, err			= cli.HGet(key, "tx_hash").Result()
 	ret.Asset, err			= cli.HGet(key, "asset").Result()
 	ret.Type, err			= cli.HGet(key, "type").Result()

@@ -111,10 +111,7 @@ func (service *notifyService) startWaitForStable() {
 			if curHeight >= tx.Height + stableHeight {
 				utils.LogMsgEx(utils.INFO, "交易：%s已进入稳定状态", tx.TxHash)
 
-				tx.TxHash, tx.Asset
-				if err = TxIntoStable(entities.DatabaseProcess {
-					tx.TxHash
-				}, curHeight); err != nil {
+				if err = TxIntoStable(tx.TxHash, tx.Asset); err != nil {
 					continue
 				}
 
