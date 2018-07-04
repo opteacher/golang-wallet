@@ -29,12 +29,13 @@ type subsSetting struct {
 		MaxConn int		`json:"max_conn"`
 	}					`json:"db"`
 	Redis struct {
-		Password string	`json:"password"`
+		Password string		`json:"password"`
+		TimeFormat string	`json:"time_format"`
 		Clusters []struct {
-			Name string	`json:"name"`
-			Url string	`json:"url"`
-		}				`json:"clusters"`
-	}					`json:"redis"`
+			Name string		`json:"name"`
+			Url string		`json:"url"`
+		}					`json:"clusters"`
+	}						`json:"redis"`
 }
 
 type coinSetting struct {

@@ -27,6 +27,7 @@ var Processes = []string {
 }
 
 type BaseProcess struct {
+	Id int				`json:"id"`
 	TxHash string		`json:"tx_hash"`
 	Asset string		`json:"asset"`
 	Type string			`json:"type"`

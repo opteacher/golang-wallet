@@ -4,13 +4,12 @@ import (
 	"github.com/go-redis/redis"
 	"sync"
 	"utils"
-	"unsafe"
 )
 
-var __redisClis *redis.Cmdable
+var __redisClis redis.Cmdable
 var __once sync.Once
 
-func ConnectRedis() (*redis.Cmdable, error) {
+func ConnectRedis() (redis.Cmdable, error) {
 	var err error
 	if __redisClis == nil {
 		__once = sync.Once {}
@@ -33,7 +32,7 @@ func createClients() error {
 			Password: redisCfg.Password,
 		})
 		err := redisClis.Ping().Err()
-		__redisClis = (*redis.Cmdable) (unsafe.Pointer(redisClis))
+		__redisClis = redisClis
 		return err
 	} else {
 		redisCli := redis.NewClient(&redis.Options {
@@ -42,7 +41,7 @@ func createClients() error {
 			DB: 0,
 		})
 		err := redisCli.Ping().Err()
-		__redisClis = (*redis.Cmdable) (unsafe.Pointer(redisCli))
+		__redisClis = redisCli
 		return err
 	}
 }

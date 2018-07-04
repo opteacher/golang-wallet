@@ -91,3 +91,18 @@ func (d *depositDao) DepositIntoStable(txHash string) (int64, error) {
 	return updatePartsTemplate((*baseDao)(unsafe.Pointer(d)), "DepositIntoStable",
 		[]interface {} { txHash }, nil)
 }
+
+func (d *depositDao) GetDepositId(txHash string) (int, error) {
+	var result []map[string]interface {}
+	var err error
+	bd := (*baseDao)(unsafe.Pointer(d))
+	conds := []interface {} { txHash }
+	if result, err = selectTemplate(bd, "GetDepositId", conds); err != nil {
+		return -1, err
+	}
+
+	if len(result) != 1 {
+		return -1, utils.LogMsgEx(utils.ERROR, "找不到交易：%s的充币ID", txHash)
+	}
+	return result[0]["id"].(int), nil
+}

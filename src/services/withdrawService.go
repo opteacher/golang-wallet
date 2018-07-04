@@ -21,7 +21,7 @@ type withdrawService struct {
 	sync.Once
 	wdsToSend []entities.BaseWithdraw
 	wdsToSendLock *sync.RWMutex
-	wdsToInchain []string
+	wdsToInchain map[string]uint
 	wdsToInchainLock *sync.RWMutex
 }
 
@@ -41,6 +41,7 @@ func GetWithdrawService() *withdrawService {
 func (service *withdrawService) create() error {
 	service.name = "withdrawService"
 	service.status.RegAsObs(service)
+	service.wdsToInchain = make(map[string]uint)
 	service.wdsToSendLock = new(sync.RWMutex)
 	service.wdsToInchainLock = new(sync.RWMutex)
 	return service.BaseService.create()
@@ -88,7 +89,7 @@ func (service *withdrawService) loadWithdrawUnsent() error {
 			service.wdsToSend = append(service.wdsToSend, entities.TurnToBaseWithdraw(&withdraw))
 			utils.LogMsgEx(utils.INFO, "加载提币请求进待发送列队：%v", withdraw)
 		} else if withdraw.Status < entities.WITHDRAW_INCHAIN {
-			service.wdsToInchain = append(service.wdsToInchain, withdraw.TxHash)
+			service.wdsToInchain[withdraw.TxHash] = 0
 			utils.LogMsgEx(utils.INFO, "加载提币请求进待入链列队：%v", withdraw)
 		}
 	}
@@ -113,6 +114,7 @@ func (service *withdrawService) waitForWithdraw() {
 		}
 		if _, err = dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
 			BaseProcess: entities.BaseProcess {
+				Id: withdraw.Id,
 				TxHash: "",
 				Asset: withdraw.Asset,
 				Type: entities.WITHDRAW,
@@ -166,6 +168,7 @@ func (service *withdrawService) sendTransactions() {
 			}
 			if _, err = dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
 				BaseProcess: entities.BaseProcess {
+					Id: withdraw.Id,
 					TxHash: txHash,
 					Asset: withdraw.Asset,
 					Type: entities.WITHDRAW,
@@ -181,7 +184,7 @@ func (service *withdrawService) sendTransactions() {
 
 			// 插入待入链列表
 			service.wdsToInchainLock.Lock()
-			service.wdsToInchain = append(service.wdsToInchain, txHash)
+			service.wdsToInchain[txHash] = 0
 			service.wdsToInchainLock.Unlock()
 
 			// 如果发送成功，立刻删除这笔提币请求（以防重复发提币，为了防止索引出错，立即跳出循环）
@@ -199,53 +202,57 @@ func (service *withdrawService) waitForInchain() {
 	var err error
 	for err == nil && service.status.Current() == START {
 		service.wdsToInchainLock.RLock()
-		for i, txid := range service.wdsToInchain {
+		for txHash, num := range service.wdsToInchain {
 			// 检查交易的块高
 			var wd entities.Transaction
-			if wd, err = rpc.GetTransaction(txid); err != nil {
-				utils.LogMsgEx(utils.ERROR, "交易：%s查询错误：%v", txid, err)
+			if wd, err = rpc.GetTransaction(txHash); err != nil {
+				utils.LogMsgEx(utils.ERROR, "交易：%s查询错误：%v", txHash, err)
 				continue
 			}
 
 			// 如果已经入链，发送给notify服务等待稳定
 			if wd.Height == 0 {
-				utils.LogMsgEx(utils.INFO, "交易：%s等待入链。。。", txid)
+				if num % 100 == 0 {
+					utils.LogMsgEx(utils.INFO, "交易：%s等待入链", txHash)
+				}
+				service.wdsToInchain[txHash]++
 				continue
 			}
-			utils.LogMsgEx(utils.INFO, "交易：%s已经入链，高度：%d", txid, wd.Height)
+			utils.LogMsgEx(utils.INFO, "交易：%s已经入链，高度：%d", txHash, wd.Height)
 
 			// 更新状态
-			if _, err = dao.GetWithdrawDAO().WithdrawIntoChain(txid, wd.Height, wd.TxIndex); err != nil {
+			if _, err = dao.GetWithdrawDAO().WithdrawIntoChain(txHash, wd.Height, wd.TxIndex); err != nil {
 				utils.LogMsgEx(utils.ERROR, "持久化到数据库失败：%v", err)
 				continue
 			}
-			var curHeight uint64
-			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
-				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
+
+			var id int
+			if id, err = dao.GetWithdrawDAO().GetWithdrawId(txHash); err != nil {
+				utils.LogMsgEx(utils.ERROR, "获取充值交易id失败：%v", err)
 				continue
 			}
 			if _, err = dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
 				BaseProcess: entities.BaseProcess {
-					TxHash: txid,
+					Id: id,
+					TxHash: txHash,
 					Asset: wd.Asset,
 					Type: entities.WITHDRAW,
 					Process: entities.NOTIFY,
 					Cancelable: false,
 				},
 				Height: wd.Height,
-				CurrentHeight: curHeight,
 				CompleteHeight: wd.Height + uint64(utils.GetConfig().GetCoinSettings().Stable),
 				LastUpdateTime: time.Now(),
 			}); err != nil {
 				utils.LogMsgEx(utils.ERROR, "持久化到数据库失败：%v", err)
 				continue
 			}
-			utils.LogMsgEx(utils.INFO, "交易：%s已持久化", txid)
+			utils.LogMsgEx(utils.INFO, "交易：%s已持久化", txHash)
 
 			toNotifySig <- wd
 
 			// 同样，一旦发送给待稳定服务，立刻从列表中删除（为了防止索引出错，立即跳出循环）
-			service.wdsToInchain = append(service.wdsToInchain[:i], service.wdsToInchain[i + 1:]...)
+			delete(service.wdsToInchain, txHash)
 			break
 		}
 		service.wdsToInchainLock.RUnlock()

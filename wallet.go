@@ -25,43 +25,6 @@ func runServices() {
 	}
 }
 
-func exitCtrl() {
-	svcs := services.GetInitedServices()
-
-	c := make(chan os.Signal, 1)
-	stop := make(chan bool)
-	signal.Notify(c, os.Interrupt, os.Kill)
-
-	go func() {
-		<- c
-		utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
-		for _, svc := range svcs {
-			svc.Stop()
-		}
-		stop <- true
-	}()
-
-	<- stop
-	svcStts := make(map[string]int)
-	for notYet := true; notYet; {
-		for _, svc := range svcs {
-			if !svc.IsDestroy() {
-				if stt, ok := svcStts[svc.Name()]; ok {
-					if stt == svc.CurrentStatus() { continue }
-				}
-				utils.LogMsgEx(utils.WARNING, "%s服务还未安全退出，处于状态：%s",
-					svc.Name(), services.ServiceStatus[svc.CurrentStatus()])
-				svcStts[svc.Name()] = svc.CurrentStatus()
-				notYet = true
-				break
-			} else {
-				notYet = false
-			}
-		}
-	}
-	utils.LogMsgEx(utils.INFO, "退出完毕", nil)
-}
-
 var depositServices = []*services.BaseService {
 	(*services.BaseService)(unsafe.Pointer(services.GetDepositService())),
 	(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
@@ -72,6 +35,7 @@ var collectServices = []*services.BaseService {
 }
 
 var withdrawServices = []*services.BaseService {
+	(*services.BaseService)(unsafe.Pointer(services.GetHeightService())),
 	(*services.BaseService)(unsafe.Pointer(services.GetWithdrawService())),
 	(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
 }

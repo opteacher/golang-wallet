@@ -112,3 +112,18 @@ func (d *withdrawDao) SentForTxHash(txHash string, id int) (int64, error) {
 	return updateTemplate((*baseDao)(unsafe.Pointer(d)), "SentForTxHash",
 		[]interface {} { id }, []interface {} { txHash })
 }
+
+func (d *withdrawDao) GetWithdrawId(txHash string) (int, error) {
+	var result []map[string]interface {}
+	var err error
+	bd := (*baseDao)(unsafe.Pointer(d))
+	conds := []interface {} { txHash }
+	if result, err = selectTemplate(bd, "GetWithdrawId", conds); err != nil {
+		return -1, err
+	}
+
+	if len(result) != 1 {
+		return -1, utils.LogMsgEx(utils.ERROR, "找不到交易：%s的提币ID", txHash)
+	}
+	return int(*result[0]["id"].(*int32)), nil
+}

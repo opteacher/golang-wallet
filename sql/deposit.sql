@@ -27,3 +27,6 @@ SELECT tx_hash, address, amount, asset, height, tx_index FROM deposit WHERE asse
 
 # DepositIntoStable
 UPDATE deposit SET status=2 WHERE tx_hash=?
+
+# GetDepositId
+SELECT id FROM deposit WHERE tx_hash=?

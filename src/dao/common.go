@@ -196,8 +196,8 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 	defer rows.Close()
 
 	var result []map[string]interface {}
-	var entity = make(map[string]interface {})
 	for rows.Next() {
+		var entity = make(map[string]interface {})
 		var colTyps []*sql.ColumnType
 		if colTyps, err = rows.ColumnTypes(); err != nil {
 			panic(utils.LogIdxEx(utils.ERROR, 14, err))

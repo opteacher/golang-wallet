@@ -127,25 +127,36 @@ func (service *depositService) startScanChain() {
 				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
 				continue
 			}
-			dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
-				entities.BaseProcess {
-					deposit.TxHash,
-					deposit.Asset,
-					entities.DEPOSIT,
-					entities.NOTIFY,
-					true,
+
+			// 获取交易id，并插入进度表
+			var id int
+			if id, err = dao.GetDepositDAO().GetDepositId(deposit.TxHash); err != nil {
+				utils.LogMsgEx(utils.ERROR, "获取充值交易id失败：%v", err)
+				continue
+			}
+			if _, err = dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
+				BaseProcess: entities.BaseProcess {
+					Id: id,
+					TxHash: deposit.TxHash,
+					Asset: deposit.Asset,
+					Type: entities.DEPOSIT,
+					Process: entities.NOTIFY,
+					Cancelable: false,
 				},
-				deposit.Height,
-				curHeight,
-				deposit.Height + uint64(coinSet.Stable),
-				time.Now(),
-			})
+				Height: deposit.Height,
+				CurrentHeight: curHeight,
+				CompleteHeight: deposit.Height + uint64(coinSet.Stable),
+				LastUpdateTime: time.Now(),
+			}); err != nil {
+				utils.LogMsgEx(utils.ERROR, "插入进度表失败：%v", err)
+				continue
+			}
 
 			// 如果已经达到稳定块高，直接存入数据库
 			if deposit.Height + uint64(coinSet.Stable) >= curHeight {
 				utils.LogMsgEx(utils.INFO, "交易（%s）进入稳定状态", deposit.TxHash)
 
-				if err = TxIntoStable(tx.TxHash, curHeight); err != nil {
+				if err = TxIntoStable(tx.TxHash, tx.Asset, curHeight); err != nil {
 					utils.LogMsgEx(utils.ERROR, "插入稳定交易记录失败：%v", err)
 					continue
 				}

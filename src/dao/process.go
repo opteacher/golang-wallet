@@ -3,10 +3,26 @@ package dao
 import (
 	"sync"
 	"entities"
-	"database/sql"
 	"utils"
-	"unsafe"
+	"databases"
+	"github.com/go-redis/redis"
+	"time"
+	"fmt"
 )
+
+var _timeFormat = map[string]string {
+	"ANSIC": time.ANSIC,
+	"UnixDate": time.UnixDate,
+	"RubyDate": time.RubyDate,
+	"RFC822": time.RFC822,
+	"RFC822Z": time.RFC822Z,
+	"RFC850": time.RFC850,
+	"RFC1123": time.RFC1123,
+	"RFC1123Z": time.RFC1123Z,
+	"RFC3339": time.RFC3339,
+	"RFC3339Nano": time.RFC3339Nano,
+	"Kitchen": time.Kitchen,
+}
 
 type processDao struct {
 	baseDao
@@ -19,66 +35,125 @@ func GetProcessDAO() *processDao {
 	if _processDao == nil {
 		_processDao = new(processDao)
 		_processDao.Once = sync.Once {}
-		_processDao.Once.Do(func() {
-			_processDao.create("process")
-		})
+		_processDao.Once.Do(func() {})
 	}
 	return _processDao
 }
 
 func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, error) {
-	var keys = []string { "tx_hash" }
-	var vals = []interface {} { process.TxHash }
+	var cli redis.Cmdable
+	var err error
+	if cli, err = databases.ConnectRedis(); err != nil {
+		return 0, utils.LogIdxEx(utils.ERROR, 42, err)
+	}
+
+	key := fmt.Sprintf("process_%s_%d", process.Asset, process.Id)
+
+	if process.TxHash != "" {
+		if err = cli.HSet(key, "tx_hash", process.TxHash).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置tx_hash失败：%v", err)
+		}
+	}
 	if process.Asset != "" {
-		keys = append(keys, "asset")
-		vals = append(vals, process.Asset)
+		if err = cli.HSet(key, "asset", process.Asset).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置asset失败：%v", err)
+		}
 	}
 	if process.Type != "" {
-		keys = append(keys, "`type`")
-		vals = append(vals, process.Type)
-	}
-	if process.Height != 0 {
-		keys = append(keys, "height")
-		vals = append(vals, process.Height)
-	}
-	if process.CompleteHeight != 0 {
-		keys = append(keys, "complete_height")
-		vals = append(vals, process.CompleteHeight)
+		if err = cli.HSet(key, "type", process.Type).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置type失败：%v", err)
+		}
 	}
 	if utils.StrArrayContains(entities.Processes, process.Process) {
-		keys = append(keys, "process")
-		vals = append(vals, process.Process)
+		if err = cli.HSet(key, "process", process.Process).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置process失败：%v", err)
+		}
 	}
 	if !process.Cancelable {
-		keys = append(keys, "cancelable")
-		vals = append(vals, 0)
+		if err = cli.HSet(key, "cancelable", 0).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置cancelable失败：%v", err)
+		}
 	}
-	return saveTemplate((*baseDao)(unsafe.Pointer(d)),
-		"CheckProcsExists", "AddProcess", "UpdateProcessByHash",
-			[]interface {} { process.TxHash }, vals, keys)
+	if process.Height != 0 {
+		if err = cli.HSet(key, "height", process.Height).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置height失败：%v", err)
+		}
+	}
+	if process.CurrentHeight != 0 {
+		if err = cli.HSet(key, "current_height", process.CurrentHeight).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置current_height失败：%v", err)
+		}
+	}
+	if process.CompleteHeight != 0 {
+		if err = cli.HSet(key, "complete_height", process.CompleteHeight).Err(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "设置complete_height失败：%v", err)
+		}
+	}
+	idTmFmt := utils.GetConfig().GetSubsSettings().Redis.TimeFormat
+	var ok bool
+	if idTmFmt, ok = _timeFormat[idTmFmt]; !ok {
+		idTmFmt = _timeFormat["RFC3339"]
+	}
+	if err = cli.HSet(key, "last_update_time", time.Now().Format(idTmFmt)).Err(); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "设置last_update_time失败：%v", err)
+	}
+	return 1, nil
 }
 
-func (d *processDao) QueryProcess(asset string, txHash string) (entities.DatabaseProcess, error) {
+func (d *processDao) QueryProcess(asset string, id int) (entities.DatabaseProcess, error) {
 	var ret entities.DatabaseProcess
-	var result []map[string]interface {}
+	var cli redis.Cmdable
 	var err error
-	conds := []interface {} { asset, txHash }
-	bd := (*baseDao)(unsafe.Pointer(d))
-	if result, err = selectTemplate(bd, "QueryProcess", conds); err != nil {
-		return ret, err
-	}
-	if len(result) != 1 {
-		return ret, utils.LogMsgEx(utils.ERROR, "无法找到指定的进度任务：%s", txHash)
+	if cli, err = databases.ConnectRedis(); err != nil {
+		return ret, utils.LogIdxEx(utils.ERROR, 42, err)
 	}
 
-	entity := result[0]
-	ret.TxHash = txHash
-	ret.Asset = asset
-	ret.Type = string(*entity["type"].(*sql.RawBytes))
-	ret.Height = uint64(entity["height"].(*sql.NullInt64).Int64)
-	ret.CurrentHeight = uint64(entity["current_height"].(*sql.NullInt64).Int64)
-	ret.CompleteHeight = uint64(entity["complete_height"].(*sql.NullInt64).Int64)
-	ret.Process = string(*entity["process"].(*sql.RawBytes))
-	ret.Cancelable = *entity["cancelable"].(*int8) != 0
-	return ret, nil
+	key := fmt.Sprintf("process_%s_%d", asset, id)
+
+	ret.Id					= id
+	ret.TxHash, err			= cli.HGet(key, "tx_hash").Result()
+	ret.Asset, err			= cli.HGet(key, "asset").Result()
+	ret.Type, err			= cli.HGet(key, "type").Result()
+	ret.Process, err		= cli.HGet(key, "process").Result()
+	var strCancelable string
+	strCancelable, err		= cli.HGet(key, "cancelable").Result()
+	ret.Cancelable			= strCancelable == "true"
+	ret.Height, err			= cli.HGet(key, "height").Uint64()
+	ret.CurrentHeight, err	= cli.HGet(key, "current_height").Uint64()
+	ret.CompleteHeight, err	= cli.HGet(key, "complete_height").Uint64()
+	var strLstUpdTm string
+	strLstUpdTm, err		= cli.HGet(key, "last_update_time").Result()
+	idTmFmt := utils.GetConfig().GetSubsSettings().Redis.TimeFormat
+	var ok bool
+	if idTmFmt, ok = _timeFormat[idTmFmt]; !ok {
+		idTmFmt = _timeFormat["RFC3339"]
+	}
+	ret.LastUpdateTime, err	= time.Parse(idTmFmt, strLstUpdTm)
+	if err != nil {
+		return ret, utils.LogMsgEx(utils.ERROR, "获取进度失败：%v", err)
+	} else {
+		return ret, nil
+	}
+}
+
+func (d *processDao) UpdateHeight(asset string, curHeight uint64) (int64, error) {
+	var cli redis.Cmdable
+	var err error
+	if cli, err = databases.ConnectRedis(); err != nil {
+		return 0, utils.LogIdxEx(utils.ERROR, 42, err)
+	}
+
+	var keys []string
+	if keys, err = cli.Keys("process_*").Result(); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "获取所有键失败：%v", err)
+	}
+
+	numKeys := len(keys)
+	for _, key := range keys {
+		if err = cli.HSet(key, "current_height", curHeight).Err(); err != nil {
+			utils.LogMsgEx(utils.ERROR, "更新交易：%s失败：%v", key, err)
+			numKeys--
+		}
+	}
+	return int64(numKeys), nil
 }

@@ -10,6 +10,7 @@ import (
 	"utils"
 	"strings"
 	"reflect"
+	"strconv"
 )
 
 const WithdrawPath = "/api/withdraw"
@@ -79,7 +80,7 @@ func RootHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-const getProcessPath	= "^/api/common/([A-Z]{3,})/process/([a-zA-Z0-9]{10,})"
+const getProcessPath	= "^/api/common/([A-Z]{3,})/process/([0-9]{1,})"
 
 var cmRouteMap = map[string]api{
 	getProcessPath: {queryProcess, "GET"},
@@ -107,7 +108,14 @@ func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
 
 	var process entities.DatabaseProcess
 	var err error
-	if process, err = dao.GetProcessDAO().QueryProcess(coinName, txId); err != nil {
+	var id int
+	if id, err = strconv.Atoi(txId); err != nil {
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	if process, err = dao.GetProcessDAO().QueryProcess(coinName, id); err != nil {
 		resp.Code = 500
 		resp.Msg = err.Error()
 		ret, _ := json.Marshal(resp)

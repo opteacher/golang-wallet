@@ -33,3 +33,6 @@ SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_tim
 
 # GetUnfinishWithdraw
 SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE asset=? AND status >= 1 AND status < 3
+
+# GetWithdrawId
+SELECT id FROM withdraw WHERE tx_hash=?

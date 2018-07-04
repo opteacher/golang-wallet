@@ -17,6 +17,7 @@ type notifyService struct {
 	BaseService
 	sync.Once
 	waitForStableTxs []entities.Transaction
+	waitTxsCounter map[string]uint
 	waitForStableTxsLock *sync.Mutex
 }
 
@@ -36,6 +37,7 @@ func GetNotifyService() *notifyService {
 func (service *notifyService) create() error {
 	service.name = "notifyService"
 	service.status.RegAsObs(service)
+	service.waitTxsCounter = make(map[string]uint)
 	service.waitForStableTxsLock = new(sync.Mutex)
 	return service.BaseService.create()
 }
@@ -81,10 +83,12 @@ func (service *notifyService) loadIncompleteTransactions() error  {
 	for _, deposit := range deposits {
 		utils.LogMsgEx(utils.INFO, "发现一笔待稳定的充值记录：%s", deposit.TxHash)
 		service.waitForStableTxs = append(service.waitForStableTxs, deposit.Transaction)
+		service.waitTxsCounter[deposit.TxHash] = 0
 	}
 	for _, withdraw := range withdraws {
 		utils.LogMsgEx(utils.INFO, "发现一笔待稳定的提币记录：%s", withdraw.TxHash)
 		service.waitForStableTxs = append(service.waitForStableTxs, withdraw.Transaction)
+		service.waitTxsCounter[withdraw.TxHash] = 0
 	}
 	return err
 }
@@ -107,16 +111,22 @@ func (service *notifyService) startWaitForStable() {
 			if curHeight >= tx.Height + stableHeight {
 				utils.LogMsgEx(utils.INFO, "交易：%s已进入稳定状态", tx.TxHash)
 
-				if err = TxIntoStable(tx.TxHash, curHeight); err != nil {
-					service.waitForStableTxs = append(service.waitForStableTxs, tx)
+				tx.TxHash, tx.Asset
+				if err = TxIntoStable(entities.DatabaseProcess {
+					tx.TxHash
+				}, curHeight); err != nil {
 					continue
 				}
 
 				service.waitForStableTxs = append(service.waitForStableTxs[:i], service.waitForStableTxs[i + 1:]...)
+				delete(service.waitTxsCounter, tx.TxHash)
 				break
 			} else {
-				utils.LogMsgEx(utils.INFO, "交易：%s等待稳定，%d/%d",
-					tx.TxHash, curHeight, tx.Height + stableHeight)
+				if service.waitTxsCounter[tx.TxHash] % 20 == 0 {
+					utils.LogMsgEx(utils.INFO, "交易：%s等待稳定，%d/%d",
+						tx.TxHash, curHeight, tx.Height + stableHeight)
+				}
+				service.waitTxsCounter[tx.TxHash]++
 			}
 		}
 		service.waitForStableTxsLock.Unlock()
@@ -136,6 +146,7 @@ func (service *notifyService) waitForUnstableTransaction() {
 
 		service.waitForStableTxsLock.Lock()
 		service.waitForStableTxs = append(service.waitForStableTxs, tx)
+		service.waitTxsCounter[tx.TxHash] = 0
 		service.waitForStableTxsLock.Unlock()
 		utils.LogMsgEx(utils.INFO, "交易（%s）已处于等待状态", tx.TxHash)
 	}
