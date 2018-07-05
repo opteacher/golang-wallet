@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	"time"
 	"fmt"
+	"strings"
 )
 
 var _timeFormat = map[string]string {
@@ -197,6 +198,14 @@ func (d *processDao) UpdateHeight(asset string, curHeight uint64) (int64, error)
 
 	numKeys := len(keys)
 	for _, key := range keys {
+		var process string
+		if process, err = cli.HGet(key, "process").Result(); err != nil {
+			utils.LogMsgEx(utils.ERROR, "查找进度失败：%v", err)
+			continue
+		}
+		if strings.ToUpper(process) == entities.FINISH {
+			continue
+		}
 		if err = cli.HSet(key, "current_height", curHeight).Err(); err != nil {
 			utils.LogMsgEx(utils.ERROR, "更新交易：%s失败：%v", key, err)
 			numKeys--
