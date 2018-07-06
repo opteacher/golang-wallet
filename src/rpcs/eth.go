@@ -85,9 +85,9 @@ func (rpc *eth) strProp(tx map[string]interface{}, key string) (string, error) {
 	return itfc.(string), nil
 }
 
-func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Int, error) {
+func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Float, error) {
 	var err error
-	var numTmp = big.NewInt(0)
+	var numTmp = big.NewFloat(0)
 	var strTmp string
 	if strTmp, err = rpc.strProp(tx, key); err != nil {
 		return numTmp, err
@@ -98,8 +98,7 @@ func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Int, error)
 	if strTmp[:2] == "0x" {
 		strTmp = strTmp[2:]
 	}
-	var ok bool
-	if numTmp, ok = numTmp.SetString(strTmp, 16); !ok {
+	if numTmp, _, err = numTmp.Parse(strTmp, 16); err != nil {
 		return numTmp, utils.LogIdxEx(utils.ERROR, 29, strTmp)
 	}
 	return numTmp, nil
@@ -178,23 +177,22 @@ func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 		}
 		rpcTx.Asset = rpc.coinName
 		rpcTx.TxIndex = i
-		var heightBint *big.Int
-		if heightBint, err = rpc.numProp(rawTx, "blockNumber"); err != nil {
+		var heightBig *big.Float
+		if heightBig, err = rpc.numProp(rawTx, "blockNumber"); err != nil {
 			continue
 		}
-		rpcTx.Height = heightBint.Uint64()
-		var timestampBint *big.Int
-		if timestampBint, err = rpc.numProp(respData, "timestamp"); err != nil {
+		rpcTx.Height, _ = heightBig.Uint64()
+		var timestampBig *big.Float
+		if timestampBig, err = rpc.numProp(respData, "timestamp"); err != nil {
 			continue
 		}
-		rpcTx.CreateTime = time.Unix(timestampBint.Int64(), 0)
-		var valueBint *big.Int
-		if valueBint, err = rpc.numProp(rawTx, "value"); err != nil {
+		timeInt64, _ := timestampBig.Int64()
+		rpcTx.CreateTime = time.Unix(timeInt64, 0)
+		var valueBig *big.Float
+		if valueBig, err = rpc.numProp(rawTx, "value"); err != nil {
 			continue
 		}
-		var amountBflt = big.NewFloat(0)
-		amountBflt.SetInt(valueBint.Div(valueBint, big.NewInt(int64(math.Pow10(rpc.decimal)))))
-		rpcTx.Amount, _ = amountBflt.Float64()
+		rpcTx.Amount, _ = valueBig.Mul(valueBig, big.NewFloat(math.Pow10(-rpc.decimal))).Float64()
 		if rpcTx.TxHash, err = rpc.strProp(rawTx, "hash"); err != nil {
 			continue
 		}
@@ -354,18 +352,19 @@ func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
 	}
 	result := resp.Result.(map[string]interface {})
 
-	var numTmp *big.Int
+	var numTmp *big.Float
 	tx.TxHash = txHash
 	tx.Asset = "ETH"
 	if numTmp, err = rpc.numProp(result, "blockNumber"); err != nil {
 		tx.Height = 0
 	} else {
-		tx.Height = numTmp.Uint64()
+		tx.Height, _ = numTmp.Uint64()
 	}
 	if numTmp, err = rpc.numProp(result, "transactionIndex"); err != nil {
 		tx.TxIndex = -1
 	} else {
-		tx.TxIndex = int(numTmp.Int64())
+		txIdxInt64, _ := numTmp.Int64()
+		tx.TxIndex = int(txIdxInt64)
 	}
 	tx.From = result["from"].(string)
 	tx.To = result["to"].(string)
@@ -373,8 +372,6 @@ func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
 	if numTmp, err = rpc.numProp(result, "value"); err != nil {
 		return tx, utils.LogIdxEx(utils.ERROR, 41, err)
 	}
-	fltTmp := big.NewFloat(0)
-	fltTmp.SetInt(numTmp.Div(numTmp, big.NewInt(int64(math.Pow10(rpc.decimal)))))
-	tx.Amount, _ = fltTmp.Float64()
+	tx.Amount, _ = numTmp.Mul(numTmp, big.NewFloat(math.Pow10(-rpc.decimal))).Float64()
 	return tx, nil
 }

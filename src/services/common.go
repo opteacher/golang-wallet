@@ -5,6 +5,8 @@ import (
 	"entities"
 	"utils"
 	"unsafe"
+	"rpcs"
+	"fmt"
 )
 
 const (
@@ -94,6 +96,21 @@ func TxIntoStable(txHash string, asset string) error {
 	process.Process = entities.FINISH
 	if _, err = dao.GetProcessDAO().SaveProcess(&process); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "插入/更新进度表失败：%v", err)
+	}
+
+	// 查询process获得id和type
+	if process, err = dao.GetProcessDAO().QueryProcessByTxHash(asset, txHash); err != nil {
+		return utils.LogMsgEx(utils.ERROR, "查询进度表失败：%v", err)
+	}
+
+	// 添加交易进数据库
+	var tx entities.Transaction
+	if tx, err = rpcs.GetRPC(asset).GetTransaction(txHash); err != nil {
+		return utils.LogMsgEx(utils.ERROR, "从链查询交易失败：%v", err)
+	}
+	if _, err = dao.GetTransactionDAO().AddTransaction(tx,
+		fmt.Sprintf("%s_%d", process.Type, process.Id)); err != nil {
+			return utils.LogMsgEx(utils.ERROR, "插入交易表失败：%v", err)
 	}
 
 	utils.LogMsgEx(utils.INFO, "交易完成：%s", txHash)

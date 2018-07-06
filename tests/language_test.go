@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"math/big"
+	"math"
 )
 
 type itfc interface {
@@ -36,4 +38,14 @@ func TestLang(t *testing.T) {
 	abcd := []int {1}
 	abcd = append(abcd[:0], abcd[1:]...)
 	fmt.Println(abcd)
+
+	var ttttt = big.NewFloat(0)
+	var y = 0
+	var err error
+	if ttttt, y, err = ttttt.Parse("6194049F30F7200000", 16); err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println(ttttt.Mul(ttttt, big.NewFloat(math.Pow10(-18))).String())
+		log.Println(y)
+	}
 }

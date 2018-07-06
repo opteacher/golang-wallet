@@ -3,7 +3,7 @@
 		"url": "",
 		"name": "test",
 		"username": "root",
-		"password": "59524148chenOP",
+		"password": "12345",
 		"max_conn": 20
 	},
 	"redis": {

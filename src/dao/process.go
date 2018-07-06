@@ -137,6 +137,10 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 	if err = cli.HSet(key, "last_update_time", time.Now().Format(idTmFmt)).Err(); err != nil {
 		return 0, utils.LogMsgEx(utils.ERROR, "设置last_update_time失败：%v", err)
 	}
+	// 如果交易完成，会持久化到数据库，redis挂1天
+	if process.Process == entities.FINISH {
+		cli.Expire(key, 24 * time.Hour)
+	}
 	return 1, nil
 }
 

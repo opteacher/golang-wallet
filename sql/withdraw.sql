@@ -1,6 +1,6 @@
 # CreateTable
 CREATE TABLE IF NOT EXISTS withdraw (
-  id INTEGER NOT NULL,
+  id INTEGER NOT NULL UNIQUE,
   tx_hash VARCHAR(255) UNIQUE,
   address VARCHAR(255) NOT NULL,
   amount DECIMAL(64,20) NOT NULL,
