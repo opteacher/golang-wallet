@@ -6,5 +6,4 @@ then \
 /home/george/applications/go/bin/go get -u github.com/stretchr/testify |\
 /home/george/applications/go/bin/go get -u github.com/go-redis/redis
 fi
-read -p "Choise build type(main/test): " input
-/home/george/applications/go/bin/go run $input.go
+/home/george/applications/go/bin/go build wallet.go
