@@ -90,6 +90,7 @@ func insertTemplate(d *baseDao, sqlName string, props []interface {}) (int64, er
 	if db, err = databases.ConnectMySQL(); err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
+	defer db.Close()
 
 	var insertSQL string
 	var ok bool
@@ -113,6 +114,7 @@ func saveTemplate(d *baseDao,
 	if db, err = databases.ConnectMySQL(); err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
+	defer db.Close()
 
 	var selectSQL string
 	var ok bool
@@ -182,6 +184,7 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 	if db, err = databases.ConnectMySQL(); err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
+	defer db.Close()
 
 	var selectSQL string
 	var ok bool
@@ -220,12 +223,65 @@ func selectTemplate(d *baseDao, sqlName string, conds []interface {}) ([]map[str
 	return result, nil
 }
 
+func selectPartsTemplate(d *baseDao, sqlName string, conds map[string]interface{}) ([]map[string]interface {}, error) {
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
+	}
+	defer db.Close()
+
+	var selectSQL string
+	var ok bool
+	if selectSQL, ok = d.sqls[sqlName]; !ok {
+		return nil, utils.LogIdxEx(utils.ERROR, 11, sqlName)
+	}
+
+	var rows *sql.Rows
+	var keys []string
+	var vals []interface {}
+	for key, val := range conds {
+		keys = append(keys, fmt.Sprintf("%s=?", key))
+		vals = append(vals, val)
+	}
+	selectSQL = fmt.Sprintf(selectSQL, strings.Join(keys, " AND "))
+	if rows, err = db.Query(selectSQL, vals...); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 13, err))
+	}
+	defer rows.Close()
+
+	var result []map[string]interface {}
+	for rows.Next() {
+		var entity = make(map[string]interface {})
+		var colTyps []*sql.ColumnType
+		if colTyps, err = rows.ColumnTypes(); err != nil {
+			panic(utils.LogIdxEx(utils.ERROR, 14, err))
+		}
+		var params []interface {}
+		for _, colTyp := range colTyps {
+			entity[colTyp.Name()] = reflect.New(colTyp.ScanType()).Interface()
+			params = append(params, entity[colTyp.Name()])
+		}
+		if err = rows.Scan(params...); err != nil {
+			utils.LogIdxEx(utils.ERROR, 14, err)
+			continue
+		}
+		result = append(result, entity)
+	}
+
+	if err = rows.Err(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 14, err))
+	}
+	return result, nil
+}
+
 func updateTemplate(d *baseDao, sqlName string, conds []interface {}, props []interface {}) (int64, error) {
 	var db *sql.DB
 	var err error
 	if db, err = databases.ConnectMySQL(); err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
+	defer db.Close()
 
 	var updateSQL string
 	var ok bool
@@ -253,6 +309,7 @@ func updatePartsTemplate(d *baseDao, sqlName string, conds []interface {}, props
 	if db, err = databases.ConnectMySQL(); err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
+	defer db.Close()
 
 	var updateSQL string
 	var ok bool
@@ -288,6 +345,7 @@ func insertPartsTemplate(d *baseDao, sqlName string, props map[string]interface 
 	if db, err = databases.ConnectMySQL(); err != nil {
 		panic(utils.LogIdxEx(utils.ERROR, 10, err))
 	}
+	defer db.Close()
 
 	var insertSQL string
 	var ok bool

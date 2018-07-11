@@ -127,3 +127,32 @@ func (d *withdrawDao) GetWithdrawId(txHash string) (int, error) {
 	}
 	return int(*result[0]["id"].(*int32)), nil
 }
+
+func (d *withdrawDao) GetWithdraws(conds map[string]interface {}) ([]entities.DatabaseWithdraw, error) {
+	bd := (*baseDao)(unsafe.Pointer(d))
+	var result []map[string]interface {}
+	var err error
+	if result, err = selectPartsTemplate(bd, "GetWithdraws", conds); err != nil {
+		return nil, err
+	}
+
+	var ret []entities.DatabaseWithdraw
+	for _, entity := range result {
+		var withdraw entities.DatabaseWithdraw
+		withdraw.Id = int(*entity["id"].(*int32))
+		withdraw.TxHash = string(*entity["tx_hash"].(*sql.RawBytes))
+		withdraw.To = string(*entity["address"].(*sql.RawBytes))
+		withdraw.Address = withdraw.To
+		withdraw.Amount, err = strconv.ParseFloat(string(*entity["amount"].(*sql.RawBytes)), 64)
+		if err != nil {
+			panic(utils.LogMsgEx(utils.ERROR, "解析交易金额失败：%v", err))
+		}
+		withdraw.Asset = string(*entity["asset"].(*sql.RawBytes))
+		withdraw.Height = uint64(*entity["height"].(*int32))
+		withdraw.TxIndex = int(entity["tx_index"].(*sql.NullInt64).Int64)
+		withdraw.CreateTime = entity["create_time"].(*mysql.NullTime).Time
+		withdraw.UpdateTime = entity["update_time"].(*mysql.NullTime).Time
+		ret = append(ret, withdraw)
+	}
+	return ret, nil
+}

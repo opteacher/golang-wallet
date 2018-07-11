@@ -11,6 +11,8 @@ import (
 	"strings"
 	"reflect"
 	"strconv"
+	"rpcs"
+	"io/ioutil"
 )
 
 const WithdrawPath = "/api/withdraw"
@@ -31,22 +33,35 @@ type api struct {
 	Method string
 }
 
-func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]api) {
+func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]interface {}) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	uri := strings.Split(req.RequestURI, "?")
+	if len(uri) == 2 {
+		req.RequestURI = uri[0]
+		req.ParseForm()
+		fmt.Println(req.Form.Get("address"))
+	}
 	for route, handle := range routeMap {
-		re := regexp.MustCompile(route)
+		reqGrp := strings.Split(route, " ")
+		if len(reqGrp) != 2 {
+			continue
+		}
+		method := reqGrp[0]
+		path := reqGrp[1]
+		re := regexp.MustCompile(path)
 		if !re.MatchString(req.RequestURI) { continue }
-		if strings.ToUpper(req.Method) == handle.Method {
-			a := reflect.ValueOf(handle.Func).Call([]reflect.Value {
+		if strings.ToUpper(req.Method) == method {
+			a := reflect.ValueOf(handle).Call([]reflect.Value {
 				reflect.ValueOf(w), reflect.ValueOf(req),
 			})
 			w.Write(a[0].Bytes())
 			return
 		} else {
-			utils.LogIdxEx(utils.WARNING, 36, handle.Method, req.Method)
+			utils.LogIdxEx(utils.WARNING, 36, method, req.Method)
 			var resp RespVO
 			resp.Code = 405
-			resp.Msg = fmt.Sprintf(utils.GetIdxMsg("W0036"), handle.Method, req.Method)
+			resp.Msg = fmt.Sprintf(utils.GetIdxMsg("W0036"), method, req.Method)
 			respJSON , _:= json.Marshal(resp)
 			w.Write(respJSON)
 			return
@@ -81,9 +96,11 @@ func RootHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 const getProcessPath	= "^/api/common/([A-Z]{3,})/process/([a-zA-Z0-9]{1,})"
+const transferPath		= "^/api/common/([A-Z]{3,})/transfer$"
 
-var cmRouteMap = map[string]api{
-	getProcessPath: {queryProcess, http.MethodGet },
+var cmRouteMap = map[string]interface {} {
+	fmt.Sprintf("%s %s", http.MethodGet, getProcessPath): queryProcess,
+	fmt.Sprintf("%s %s", http.MethodPost, transferPath): trasnfer,
 }
 
 func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
@@ -140,4 +157,61 @@ func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
 	resp.Data = process
 	ret, _ := json.Marshal(resp)
 	return ret
+}
+
+type transactionReq struct {
+	From string		`json:"from"`
+	To string		`json:"to"`
+	Amount float64	`json:"amount"`
+}
+
+func trasnfer(w http.ResponseWriter, req *http.Request) []byte {
+	var resp RespVO
+	re := regexp.MustCompile(transferPath)
+	params := re.FindStringSubmatch(req.RequestURI)[1:]
+	if len(params) == 0 {
+		resp.Code = 500
+		resp.Msg = "需要指定币种的名字"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	// 参数解析
+	var body []byte
+	var err error
+	if body, err = ioutil.ReadAll(req.Body); err != nil {
+		utils.LogMsgEx(utils.WARNING, "解析请求体错误：%v", err)
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	defer req.Body.Close()
+
+	utils.LogMsgEx(utils.INFO, "收到交易请求：%s", string(body))
+
+	var txReq transactionReq
+	if err = json.Unmarshal(body, &txReq); err != nil {
+		utils.LogIdxEx(utils.WARNING, 38, err)
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	rpc := rpcs.GetRPC(params[0])
+	var txHash string
+	tradePwd := utils.GetConfig().GetCoinSettings().TradePassword
+	if txHash, err = rpc.SendTransaction(txReq.From, txReq.To, txReq.Amount, tradePwd); err != nil {
+		utils.LogMsgEx(utils.ERROR, "发送交易失败：%v", err)
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	resp.Code = 200
+	resp.Data = txHash
+	ret, _ := json.Marshal(resp)
+	return []byte(ret)
 }

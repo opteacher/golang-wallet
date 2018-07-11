@@ -11,14 +11,14 @@ const (
 
 type BaseDeposit struct {
 	Transaction
-	Address string
+	Address string	`json:"address"`
 }
 
 type DatabaseDeposit struct {
 	BaseDeposit
-	Id int
-	Status int
-	UpdateTime time.Time
+	Id int					`json:"id"`
+	Status int				`json:"status"`
+	UpdateTime time.Time	`json:"update_time"`
 }
 
 func TurnTxToDeposit(tx *Transaction) BaseDeposit {

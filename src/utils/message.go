@@ -94,11 +94,24 @@ func logMsgEx(level int, msg string, detail ...interface {}) error {
 
 func procsDetail(detail interface {}) error {
 	if detail != nil {
-		switch reflect.TypeOf(detail).Name() {
+		typName := reflect.TypeOf(detail).Name()
+		switch typName {
 		case "error":
 			return detail.(error)
 		case "string":
 			return errors.New(detail.(string))
+		case "int":
+			fallthrough
+		case "int32":
+			fallthrough
+		case "int64":
+			fallthrough
+		case "uint":
+			fallthrough
+		case "uint32":
+			fallthrough
+		case "uint64":
+			return errors.New(fmt.Sprintf("%d", detail))
 		default:
 			return nil
 		}

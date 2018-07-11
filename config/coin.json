@@ -2,7 +2,7 @@
 	"name": "ETH",
 	"url": "http://18.144.17.127:8545",
 	"decimal": 8,
-	"stable": 2,
+	"stable": 12,
 	"collect": "0xb78f085e2759baf782c705cd3a9fcb5d39fa7b3c",
 	"minCollect": 0.0001,
 	"collectInterval": 30,

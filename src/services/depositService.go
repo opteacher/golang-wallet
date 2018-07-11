@@ -7,6 +7,7 @@ import (
 	"rpcs"
 	"entities"
 	"time"
+	"strconv"
 )
 
 /***
@@ -102,7 +103,11 @@ func (service *depositService) startScanChain() {
 		// 获取指定高度的交易
 		var txs []entities.Transaction
 		if txs, err = rpc.GetTransactions(uint(service.height)); err != nil {
-			utils.LogMsgEx(utils.ERROR, "获取交易失败：%v", err)
+			if _, e := strconv.ParseInt(err.Error(), 10, 64); e != nil {
+				utils.LogMsgEx(utils.ERROR, "获取交易失败：%v", err)
+			} else {
+				err = nil
+			}
 			continue
 		}
 

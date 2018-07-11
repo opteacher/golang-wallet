@@ -135,7 +135,7 @@ func (rpc *eth) sendRequest(method string, params []interface {}, id string) (Et
 		}
 	}
 	if resBody.Result == nil {
-		err = utils.LogIdxEx(utils.ERROR, 40, nil)
+		err = utils.LogIdxEx(utils.DEBUG, 40, nil)
 	}
 	return resBody, err
 }
@@ -153,7 +153,7 @@ func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 
 	// 解析返回数据，提取交易
 	if resp.Result == nil {
-		return []entities.Transaction {}, utils.LogMsgEx(utils.ERROR, "找不到指定块高的块：%d", height)
+		return []entities.Transaction {}, utils.LogMsgEx(utils.DEBUG, "找不到指定块高的块：%d", height)
 	}
 	respData := resp.Result.(map[string]interface {})
 	var txsObj interface {}
@@ -244,19 +244,16 @@ func (rpc *eth) GetDepositAmount() (map[string]float64, error) {
 	return addrAmount, nil
 }
 
-func (rpc *eth) sendTransaction(from string, to string, amount float64) (string, error) {
+func (rpc *eth) SendTransaction(from string, to string, amount float64, password string) (string, error) {
 	var err error
 	coinSet := utils.GetConfig().GetCoinSettings()
 
 	// 处理转账金额
-	var amountFlt big.Float
-	amountFlt.SetFloat64(amount)
-	decimal := math.Pow10(utils.GetConfig().GetCoinSettings().Decimal)
-	var decimalFlt big.Float
-	decimalFlt.SetFloat64(decimal)
-	var amountInt big.Int
-	amountInt.SetString(amountFlt.Mul(&amountFlt, &decimalFlt).String(), 10)
-	cvtAmount := fmt.Sprintf("0x%x", &amountInt)
+	amountBig := big.NewFloat(amount)
+	decimal := math.Pow10(rpc.decimal)
+	amountFin := big.NewInt(0)
+	amountFin.SetString(amountBig.Mul(amountBig, big.NewFloat(decimal)).String(), 10)
+	cvtAmount := fmt.Sprintf("0x%x", amountFin)
 
 	// 计算手续费数量
 	var paramEstimateGas EstimateGasBody
@@ -275,7 +272,7 @@ func (rpc *eth) sendTransaction(from string, to string, amount float64) (string,
 	// 解锁用户账户
 	id = fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("personal_unlockAccount", []interface {} {
-		from, coinSet.TradePassword, coinSet.UnlockDuration,
+		from, password, coinSet.UnlockDuration,
 	}, id); err != nil {
 		return "", utils.LogIdxEx(utils.ERROR, 33, err)
 	}
@@ -300,11 +297,13 @@ func (rpc *eth) sendTransaction(from string, to string, amount float64) (string,
 }
 
 func (rpc *eth) SendFrom(from string, amount float64) (string, error) {
-	return rpc.sendTransaction(from, utils.GetConfig().GetCoinSettings().Collect, amount)
+	coinSet := utils.GetConfig().GetCoinSettings()
+	return rpc.SendTransaction(from, coinSet.Collect, amount, coinSet.TradePassword)
 }
 
 func (rpc *eth) SendTo(to string, amount float64) (string, error) {
-	return rpc.sendTransaction(utils.GetConfig().GetCoinSettings().Withdraw, to, amount)
+	coinSet := utils.GetConfig().GetCoinSettings()
+	return rpc.SendTransaction(coinSet.Withdraw, to, amount, coinSet.TradePassword)
 }
 
 func (rpc *eth) GetBalance(address string) (float64, error) {
@@ -320,12 +319,11 @@ func (rpc *eth) GetBalance(address string) (float64, error) {
 	if result[0:2] == "0x" {
 		result = result[2:]
 	}
-	var balanceInt big.Int
-	balanceInt.SetString(result, 16)
-	var balanceFlt big.Float
-	decimal := big.NewInt(int64(math.Pow10(rpc.decimal)))
-	balanceFlt.SetInt(balanceInt.Div(&balanceInt, decimal))
-	ret, _ := balanceFlt.Float64()
+	var balanceBig *big.Float
+	if balanceBig, _, err = balanceBig.Parse(result, 16); err != nil {
+		return -1, utils.LogIdxEx(utils.ERROR, 41, err)
+	}
+	ret, _ := balanceBig.Mul(balanceBig, big.NewFloat(math.Pow10(-rpc.decimal))).Float64()
 	return ret, nil
 }
 

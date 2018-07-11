@@ -10,6 +10,7 @@ import (
 	"services"
 	"dao"
 	"strings"
+	"fmt"
 )
 
 type withdrawReq struct {
@@ -20,8 +21,8 @@ type withdrawReq struct {
 
 const withdrawPath = "^/api/withdraw/([A-Z]{3,})"
 
-var wdRouteMap = map[string]api {
-	withdrawPath:	{ doWithdraw, http.MethodPost },
+var wdRouteMap = map[string]interface {} {
+	fmt.Sprintf("%s %s", http.MethodPost, withdrawPath):	doWithdraw,
 }
 
 func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
