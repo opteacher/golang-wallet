@@ -1,9 +1,9 @@
 {
 	"db": {
-		"url": "",
+		"url": "101.132.121.47:3306",
 		"name": "test",
 		"username": "root",
-		"password": "12345",
+		"password": "59524148chenOP",
 		"max_conn": 20
 	},
 	"redis": {

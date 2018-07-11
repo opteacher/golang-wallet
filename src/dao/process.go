@@ -41,6 +41,10 @@ func GetProcessDAO() *processDao {
 	return _processDao
 }
 
+func (d *processDao) PublicProcess(key string) error {
+	return nil
+}
+
 func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, error) {
 	if process.Asset == "" {
 		return 0, utils.LogMsgEx(utils.ERROR, "保存进度的时候需指定币种", nil)

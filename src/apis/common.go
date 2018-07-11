@@ -100,7 +100,7 @@ const transferPath		= "^/api/common/([A-Z]{3,})/transfer$"
 
 var cmRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodGet, getProcessPath): queryProcess,
-	fmt.Sprintf("%s %s", http.MethodPost, transferPath): trasnfer,
+	fmt.Sprintf("%s %s", http.MethodPost, transferPath): transfer,
 }
 
 func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
@@ -165,7 +165,7 @@ type transactionReq struct {
 	Amount float64	`json:"amount"`
 }
 
-func trasnfer(w http.ResponseWriter, req *http.Request) []byte {
+func transfer(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
 	re := regexp.MustCompile(transferPath)
 	params := re.FindStringSubmatch(req.RequestURI)[1:]

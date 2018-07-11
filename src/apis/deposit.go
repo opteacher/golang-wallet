@@ -44,7 +44,7 @@ func newAddress(w http.ResponseWriter, req *http.Request) []byte {
 	}
 
 	// 保存进充值地址数据库
-	if _, err = dao.GetAddressDAO().NewAddress(asset, address); err != nil {
+	if _, err = dao.GetAddressDAO().NewAddressInuse(asset, address); err != nil {
 		resp.Code = 500
 		resp.Msg = err.Error()
 		ret, _ := json.Marshal(resp)
