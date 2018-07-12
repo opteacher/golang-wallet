@@ -9,6 +9,7 @@
 	"redis": {
 		"password": "359062",
 		"time_format": "RFC3339",
+		"process_pub_key": "wallet transactions process",
 		"clusters": [
 			{
 				"name": "main",

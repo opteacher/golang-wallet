@@ -9,6 +9,7 @@ import (
 	"time"
 	"fmt"
 	"strings"
+	"encoding/json"
 )
 
 var _timeFormat = map[string]string {
@@ -39,10 +40,6 @@ func GetProcessDAO() *processDao {
 		_processDao.Once.Do(func() {})
 	}
 	return _processDao
-}
-
-func (d *processDao) PublicProcess(key string) error {
-	return nil
 }
 
 func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, error) {
@@ -144,6 +141,19 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 	// 如果交易完成，会持久化到数据库，redis挂1天
 	if process.Process == entities.FINISH {
 		cli.Expire(key, 24 * time.Hour)
+	}
+	// 发布这条交易的进度键
+	var procs entities.DatabaseProcess
+	if procs, err = d.queryProcess(key); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "获取进度失败：%v", err)
+	}
+	var strProcs []byte
+	if strProcs, err = json.Marshal(procs); err != nil {
+		return 0, utils.LogIdxEx(utils.ERROR, 22, err)
+	}
+	pocsPubKey := utils.GetConfig().GetSubsSettings().Redis.ProcessPubKey
+	if _, err = cli.Publish(pocsPubKey, strProcs).Result(); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "发布进度错误：%v", err)
 	}
 	return 1, nil
 }

@@ -19,3 +19,11 @@ func TestRedis(t *testing.T) {
 		log.Fatal(err)
 	}
 }
+
+func TestPubSub(t *testing.T) {
+	var cli redis.Cmdable
+	var err error
+	if cli, err = databases.ConnectRedis(); err != nil {
+		log.Fatal(err)
+	}
+}

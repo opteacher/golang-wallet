@@ -251,8 +251,9 @@ func (rpc *eth) SendTransaction(from string, to string, amount float64, password
 	// 处理转账金额
 	amountBig := big.NewFloat(amount)
 	decimal := math.Pow10(rpc.decimal)
+	amountBig.Mul(amountBig, big.NewFloat(decimal))
 	amountFin := big.NewInt(0)
-	amountFin.SetString(amountBig.Mul(amountBig, big.NewFloat(decimal)).String(), 10)
+	amountBig.Int(amountFin)
 	cvtAmount := fmt.Sprintf("0x%x", amountFin)
 
 	// 计算手续费数量

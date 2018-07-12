@@ -23,6 +23,7 @@ const withdrawPath = "^/api/withdraw/([A-Z]{3,})"
 
 var wdRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodPost, withdrawPath):	doWithdraw,
+	fmt.Sprintf("%s %s", http.MethodGet, withdrawPath):		getWithdraw,
 }
 
 func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
@@ -72,6 +73,23 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 			ret, _ := json.Marshal(resp)
 			return ret
 		}
+	}
+
+	var exist bool
+	if exist, err = dao.GetWithdrawDAO().CheckExistsById(wdReq.Id); err != nil {
+		utils.LogMsgEx(utils.WARNING, "从数据库检查提币ID错误：%v", err)
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	if exist {
+		errStr := fmt.Sprintf("收到重复的提币请求，Id：%d", wdReq.Id)
+		utils.LogMsgEx(utils.WARNING, errStr, nil)
+		resp.Code = 500
+		resp.Msg = errStr
+		ret, _ := json.Marshal(resp)
+		return ret
 	} else {
 		wdToSvc.Id = wdReq.Id
 	}
@@ -101,4 +119,41 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	resp.Data = wdToSvc.Id
 	ret, _ := json.Marshal(resp)
 	return []byte(ret)
+}
+
+func getWithdraw(w http.ResponseWriter, req *http.Request) []byte {
+	var resp RespVO
+	re := regexp.MustCompile(withdrawPath)
+	params := re.FindStringSubmatch(req.RequestURI)[1:]
+	if len(params) == 0 {
+		resp.Code = 500
+		resp.Msg = "需要指定币种的名字"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	conds := make(map[string]interface {})
+	conds["asset"] = params[0]
+	var result []entities.DatabaseWithdraw
+	var err error
+	if txHash := req.Form.Get("tx_hash"); txHash != "" {
+		conds["tx_hash"] = txHash
+
+		// txhash是唯一的，所以指定的话，直接返回
+		if result ,err = dao.GetWithdrawDAO().GetWithdraws(conds); err != nil {
+			resp.Code = 500
+			resp.Msg = err.Error()
+			ret, _ := json.Marshal(resp)
+			return ret
+		}
+		resp.Code = 200
+		resp.Data = result
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	resp.Code = 200
+	resp.Data = result
+	ret, _ := json.Marshal(resp)
+	return ret
 }

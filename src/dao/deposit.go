@@ -131,9 +131,30 @@ func (d *depositDao)GetDeposits(conds map[string]interface {}) ([]entities.Datab
 		deposit.Asset = string(*entity["asset"].(*sql.RawBytes))
 		deposit.Height = uint64(*entity["height"].(*int32))
 		deposit.TxIndex = int(entity["tx_index"].(*sql.NullInt64).Int64)
+		deposit.Status = int(entity["status"].(*sql.NullInt64).Int64)
 		deposit.CreateTime = entity["create_time"].(*mysql.NullTime).Time
 		deposit.UpdateTime = entity["update_time"].(*mysql.NullTime).Time
 		ret = append(ret, deposit)
 	}
 	return ret, nil
+}
+
+func (d *depositDao) CheckExists(txHash string) (bool, error) {
+	bd := (*baseDao)(unsafe.Pointer(d))
+	conds := []interface {} { txHash }
+	var result []map[string]interface {}
+	var err error
+	if result, err = selectTemplate(bd, "CheckExists", conds); err != nil {
+		return false, err
+	}
+
+	if len(result) != 1 {
+		return false, utils.LogMsgEx(utils.ERROR, "数据库查询结果异常：COUNT返回无结果")
+	}
+	var ok bool
+	var tmp interface {}
+	if tmp, ok = result[0]["num"]; !ok {
+		return false, utils.LogMsgEx(utils.ERROR, "COUNT结果没有指定键值：num")
+	}
+	return *tmp.(*int64) != 0, nil
 }

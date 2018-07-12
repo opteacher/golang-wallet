@@ -13,14 +13,14 @@ const (
 
 type BaseWithdraw struct {
 	Transaction
-	Id int
-	Address string
+	Id int			`json:"id"`
+	Address string	`json:"address"`
 }
 
 type DatabaseWithdraw struct {
 	BaseWithdraw
-	Status int
-	UpdateTime time.Time
+	Status int				`json:"status"`
+	UpdateTime time.Time	`json:"update_time"`
 }
 
 func TurnToBaseWithdraw(wd *DatabaseWithdraw) BaseWithdraw {

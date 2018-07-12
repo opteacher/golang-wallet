@@ -31,6 +31,7 @@ type subsSetting struct {
 	Redis struct {
 		Password string		`json:"password"`
 		TimeFormat string	`json:"time_format"`
+		ProcessPubKey string`json:"process_pub_key"`
 		Clusters []struct {
 			Name string		`json:"name"`
 			Url string		`json:"url"`

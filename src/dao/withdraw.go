@@ -148,11 +148,31 @@ func (d *withdrawDao) GetWithdraws(conds map[string]interface {}) ([]entities.Da
 			panic(utils.LogMsgEx(utils.ERROR, "解析交易金额失败：%v", err))
 		}
 		withdraw.Asset = string(*entity["asset"].(*sql.RawBytes))
-		withdraw.Height = uint64(*entity["height"].(*int32))
+		withdraw.Height = uint64(entity["height"].(*sql.NullInt64).Int64)
 		withdraw.TxIndex = int(entity["tx_index"].(*sql.NullInt64).Int64)
 		withdraw.CreateTime = entity["create_time"].(*mysql.NullTime).Time
 		withdraw.UpdateTime = entity["update_time"].(*mysql.NullTime).Time
 		ret = append(ret, withdraw)
 	}
 	return ret, nil
+}
+
+func (d *withdrawDao) CheckExistsById(id int) (bool, error) {
+	bd := (*baseDao)(unsafe.Pointer(d))
+	conds := []interface {} { id }
+	var result []map[string]interface {}
+	var err error
+	if result, err = selectTemplate(bd, "CheckExistsById", conds); err != nil {
+		return false, err
+	}
+
+	if len(result) != 1 {
+		return false, utils.LogMsgEx(utils.ERROR, "数据库查询结果异常：COUNT返回无结果")
+	}
+	var ok bool
+	var tmp interface {}
+	if tmp, ok = result[0]["num"]; !ok {
+		return false, utils.LogMsgEx(utils.ERROR, "COUNT结果没有指定键值：num")
+	}
+	return *tmp.(*int64) != 0, nil
 }

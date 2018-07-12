@@ -33,3 +33,6 @@ SELECT id FROM deposit WHERE tx_hash=?
 
 # GetDeposits
 SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM deposit WHERE %s
+
+# CheckExists
+SELECT COUNT(id) AS num FROM deposit WHERE tx_hash=?

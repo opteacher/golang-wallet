@@ -118,6 +118,18 @@ func (service *depositService) startScanChain() {
 			}
 
 			utils.LogMsgEx(utils.INFO, "发现交易：%v", tx)
+
+			// 检测是否重复
+			var exist bool
+			if exist, err = dao.GetDepositDAO().CheckExists(tx.TxHash); err != nil {
+				utils.LogMsgEx(utils.ERROR, "查找指定交易：%s失败：%v", tx.TxHash, err)
+				continue
+			}
+			if exist {
+				utils.LogMsgEx(utils.WARNING, "检测到重复交易：%s，跳过", tx.TxHash)
+				continue
+			}
+
 			deposit := entities.TurnTxToDeposit(&tx)
 
 			// 持久化到数据库

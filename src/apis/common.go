@@ -40,7 +40,6 @@ func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]in
 	if len(uri) == 2 {
 		req.RequestURI = uri[0]
 		req.ParseForm()
-		fmt.Println(req.Form.Get("address"))
 	}
 	for route, handle := range routeMap {
 		reqGrp := strings.Split(route, " ")
@@ -59,12 +58,12 @@ func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]in
 			return
 		} else {
 			utils.LogIdxEx(utils.WARNING, 36, method, req.Method)
-			var resp RespVO
-			resp.Code = 405
-			resp.Msg = fmt.Sprintf(utils.GetIdxMsg("W0036"), method, req.Method)
-			respJSON , _:= json.Marshal(resp)
-			w.Write(respJSON)
-			return
+			//var resp RespVO
+			//resp.Code = 405
+			//resp.Msg = fmt.Sprintf(utils.GetIdxMsg("W0036"), method, req.Method)
+			//respJSON , _:= json.Marshal(resp)
+			//w.Write(respJSON)
+			//return
 		}
 	}
 	utils.LogIdxEx(utils.WARNING, 37, req.RequestURI)

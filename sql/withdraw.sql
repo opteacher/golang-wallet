@@ -39,3 +39,6 @@ SELECT id FROM withdraw WHERE tx_hash=?
 
 # GetWithdraws
 SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE %s
+
+# CheckExistsById
+SELECT COUNT(id) AS num FROM withdraw WHERE id=?
