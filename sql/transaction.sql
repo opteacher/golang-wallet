@@ -15,3 +15,6 @@ CREATE TABLE IF NOT EXISTS `transaction` (
 
 # AddTransaction
 INSERT INTO `transaction` (%s) VALUES (%s)
+
+# CheckExists
+SELECT COUNT(opr_info) AS num FROM `transaction` WHERE opr_info=?

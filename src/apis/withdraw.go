@@ -11,6 +11,7 @@ import (
 	"dao"
 	"strings"
 	"fmt"
+	"strconv"
 )
 
 type withdrawReq struct {
@@ -138,20 +139,22 @@ func getWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	var err error
 	if txHash := req.Form.Get("tx_hash"); txHash != "" {
 		conds["tx_hash"] = txHash
-
-		// txhash是唯一的，所以指定的话，直接返回
-		if result ,err = dao.GetWithdrawDAO().GetWithdraws(conds); err != nil {
+	} else if id := req.Form.Get("id"); id != "" {
+		if conds["id"], err = strconv.ParseInt(id, 10, 64); err != nil {
+			utils.LogMsgEx(utils.ERROR, "提币id必须是数字：%s", id)
 			resp.Code = 500
 			resp.Msg = err.Error()
 			ret, _ := json.Marshal(resp)
 			return ret
 		}
-		resp.Code = 200
-		resp.Data = result
+	}
+
+	if result ,err = dao.GetWithdrawDAO().GetWithdraws(conds); err != nil {
+		resp.Code = 500
+		resp.Msg = err.Error()
 		ret, _ := json.Marshal(resp)
 		return ret
 	}
-
 	resp.Code = 200
 	resp.Data = result
 	ret, _ := json.Marshal(resp)

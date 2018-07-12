@@ -4,6 +4,7 @@ import (
 	"sync"
 	"entities"
 	"unsafe"
+	"utils"
 )
 
 type transactionDao struct {
@@ -25,6 +26,25 @@ func GetTransactionDAO() *transactionDao {
 }
 
 func (d *transactionDao) AddTransaction(tx entities.Transaction, oprInf string) (int64, error) {
+	bd := (*baseDao)(unsafe.Pointer(d))
+	var result []map[string]interface {}
+	var err error
+	if result, err = selectTemplate(bd, "CheckExists", []interface {} { oprInf }); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "检测交易存在与否失败：%v", err)
+	}
+	if len(result) != 1 {
+		return 0, utils.LogMsgEx(utils.ERROR, "检测结果不等于1", nil)
+	}
+	var ok bool
+	var tmp interface {}
+	if tmp, ok = result[0]["num"]; !ok {
+		return 0, utils.LogMsgEx(utils.ERROR, "检测存在数量的num分量不存在", nil)
+	}
+	if tmp.(int64) != 0 {
+		utils.LogMsgEx(utils.WARNING, "交易：%s已被记录", oprInf)
+		return 0, nil
+	}
+
 	entity := make(map[string]interface {})
 	entity["opr_info"] = oprInf
 	if tx.TxHash != "" {
@@ -54,5 +74,5 @@ func (d *transactionDao) AddTransaction(tx entities.Transaction, oprInf string) 
 	if tx.CreateTime.Year() > 1990 {
 		entity["create_time"] = tx.CreateTime
 	}
-	return insertPartsTemplate((*baseDao)(unsafe.Pointer(d)), "AddTransaction", entity)
+	return insertPartsTemplate(bd, "AddTransaction", entity)
 }
