@@ -12,6 +12,7 @@ import (
 	"strings"
 	"fmt"
 	"strconv"
+	"rpcs"
 )
 
 type withdrawReq struct {
@@ -20,11 +21,13 @@ type withdrawReq struct {
 	Target string	`json:"target"`
 }
 
-const withdrawPath = "^/api/withdraw/([A-Z]{3,})"
+const withdrawPath = "^/api/withdraw/([A-Z]{3,})$"
+const validAddrPath = "^/api/withdraw/([A-Z]{3,})/valid_address/(\\w+)$"
 
 var wdRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodPost, withdrawPath):	doWithdraw,
 	fmt.Sprintf("%s %s", http.MethodGet, withdrawPath):		getWithdraw,
+	fmt.Sprintf("%s %s", http.MethodGet, validAddrPath):	validAddress,
 }
 
 func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
@@ -157,6 +160,38 @@ func getWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	}
 	resp.Code = 200
 	resp.Data = result
+	ret, _ := json.Marshal(resp)
+	return ret
+}
+
+func validAddress(w http.ResponseWriter, req *http.Request) []byte {
+	var resp RespVO
+	re := regexp.MustCompile(validAddrPath)
+	params := re.FindStringSubmatch(req.RequestURI)[1:]
+	if len(params) == 0 {
+		resp.Code = 500
+		resp.Msg = "需要指定币种的名字"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	if len(params) == 1 {
+		resp.Code = 500
+		resp.Msg = "需要指定需检验的地址"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+
+	var isValid bool
+	var err error
+	if isValid, err = rpcs.GetRPC(params[0]).ValidAddress(params[1]); err != nil {
+		utils.LogMsgEx(utils.ERROR, "检验地址出错：%v", err)
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	resp.Code = 200
+	resp.Data = isValid
 	ret, _ := json.Marshal(resp)
 	return ret
 }

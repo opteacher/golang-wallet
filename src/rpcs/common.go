@@ -14,6 +14,7 @@ type Rpc interface {
 	SendFrom(from string, amount float64) (string, error)
 	SendTo(to string, amount float64) (string, error)
 	GetNewAddress() (string, error)
+	ValidAddress(address string) (bool, error)
 	GetTransaction(txHash string) (entities.Transaction, error)
 }
 

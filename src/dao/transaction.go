@@ -40,7 +40,7 @@ func (d *transactionDao) AddTransaction(tx entities.Transaction, oprInf string) 
 	if tmp, ok = result[0]["num"]; !ok {
 		return 0, utils.LogMsgEx(utils.ERROR, "检测存在数量的num分量不存在", nil)
 	}
-	if tmp.(int64) != 0 {
+	if *tmp.(*int64) != 0 {
 		utils.LogMsgEx(utils.WARNING, "交易：%s已被记录", oprInf)
 		return 0, nil
 	}

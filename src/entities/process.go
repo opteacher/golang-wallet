@@ -17,13 +17,12 @@ const (
 	LOAD	= "LOAD"
 	SENT	= "SENT"
 	SENDING	= "SENDING"
-	CONFIRM	= "CONFIRM"
-	NOTIFY	= "NOTIFY"
+	INCHAIN	= "INCHAIN"
 	FINISH	= "FINISH"
 )
 
 var Processes = []string {
-	AUDIT, LOAD, SENT, SENDING, CONFIRM, NOTIFY, FINISH,
+	AUDIT, LOAD, SENT, SENDING, INCHAIN, FINISH,
 }
 
 type BaseProcess struct {

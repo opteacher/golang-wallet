@@ -157,7 +157,7 @@ func (service *depositService) startScanChain() {
 					TxHash: deposit.TxHash,
 					Asset: deposit.Asset,
 					Type: entities.DEPOSIT,
-					Process: entities.NOTIFY,
+					Process: entities.INCHAIN,
 					Cancelable: false,
 				},
 				Height: deposit.Height,

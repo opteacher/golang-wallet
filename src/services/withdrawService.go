@@ -224,7 +224,7 @@ func (service *withdrawService) waitForInchain() {
 
 			var id int
 			if id, err = dao.GetWithdrawDAO().GetWithdrawId(txHash); err != nil {
-				utils.LogMsgEx(utils.ERROR, "获取充值交易id失败：%v", err)
+				utils.LogMsgEx(utils.ERROR, "获取提币交易id失败：%v", err)
 				continue
 			}
 			if _, err = dao.GetProcessDAO().SaveProcess(&entities.DatabaseProcess {
@@ -233,7 +233,7 @@ func (service *withdrawService) waitForInchain() {
 					TxHash: txHash,
 					Asset: wd.Asset,
 					Type: entities.WITHDRAW,
-					Process: entities.NOTIFY,
+					Process: entities.INCHAIN,
 					Cancelable: false,
 				},
 				Height: wd.Height,

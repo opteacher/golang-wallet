@@ -150,6 +150,7 @@ func (d *withdrawDao) GetWithdraws(conds map[string]interface {}) ([]entities.Da
 		withdraw.Asset = string(*entity["asset"].(*sql.RawBytes))
 		withdraw.Height = uint64(entity["height"].(*sql.NullInt64).Int64)
 		withdraw.TxIndex = int(entity["tx_index"].(*sql.NullInt64).Int64)
+		withdraw.Status = int(entity["status"].(*sql.NullInt64).Int64)
 		withdraw.CreateTime = entity["create_time"].(*mysql.NullTime).Time
 		withdraw.UpdateTime = entity["update_time"].(*mysql.NullTime).Time
 		ret = append(ret, withdraw)

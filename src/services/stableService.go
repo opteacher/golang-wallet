@@ -9,11 +9,11 @@ import (
 )
 
 /***
-	通知服务：接收来自充值和提币的交易，等待其稳定后做后续操作
+	等待稳定服务：接收来自充值和提币的交易，等待其稳定后做后续操作
 	子协程（startWaitForStable）：等待交易进入稳定状态
 	子协程（waitForUnstableTransaction）：等待来自充值和提币的交易
  */
-type notifyService struct {
+type stableService struct {
 	BaseService
 	sync.Once
 	waitForStableTxs []entities.Transaction
@@ -21,28 +21,28 @@ type notifyService struct {
 	waitForStableTxsLock *sync.Mutex
 }
 
-var _notifyService *notifyService
+var _stableService *stableService
 
-func GetNotifyService() *notifyService {
-	if _notifyService == nil {
-		_notifyService = new(notifyService)
-		_notifyService.Once = sync.Once {}
-		_notifyService.Once.Do(func() {
-			_notifyService.create()
+func GetStableService() *stableService {
+	if _stableService == nil {
+		_stableService = new(stableService)
+		_stableService.Once = sync.Once {}
+		_stableService.Once.Do(func() {
+			_stableService.create()
 		})
 	}
-	return _notifyService
+	return _stableService
 }
 
-func (service *notifyService) create() error {
-	service.name = "notifyService"
+func (service *stableService) create() error {
+	service.name = "stableService"
 	service.status.RegAsObs(service)
 	service.waitTxsCounter = make(map[string]uint)
 	service.waitForStableTxsLock = new(sync.Mutex)
 	return service.BaseService.create()
 }
 
-func (service *notifyService) BeforeTurn(s *utils.Status, tgtStt int) {
+func (service *stableService) BeforeTurn(s *utils.Status, tgtStt int) {
 	var err error
 	switch tgtStt {
 	case INIT:
@@ -56,7 +56,7 @@ func (service *notifyService) BeforeTurn(s *utils.Status, tgtStt int) {
 	}
 }
 
-func (service *notifyService) AfterTurn(s *utils.Status, srcStt int) {
+func (service *stableService) AfterTurn(s *utils.Status, srcStt int) {
 	switch s.Current() {
 	case INIT:
 		utils.LogMsgEx(utils.INFO, "initialized", nil)
@@ -69,7 +69,7 @@ func (service *notifyService) AfterTurn(s *utils.Status, srcStt int) {
 	}
 }
 
-func (service *notifyService) loadIncompleteTransactions() error  {
+func (service *stableService) loadIncompleteTransactions() error  {
 	coinSetting := utils.GetConfig().GetCoinSettings()
 	var err error
 	var deposits []entities.BaseDeposit
@@ -93,7 +93,7 @@ func (service *notifyService) loadIncompleteTransactions() error  {
 	return err
 }
 
-func (service *notifyService) startWaitForStable() {
+func (service *stableService) startWaitForStable() {
 	var err error
 	coinSet := utils.GetConfig().GetCoinSettings()
 	for err == nil && service.status.Current() == START {
@@ -131,7 +131,7 @@ func (service *notifyService) startWaitForStable() {
 	service.status.TurnTo(DESTORY)
 }
 
-func (service *notifyService) waitForUnstableTransaction() {
+func (service *stableService) waitForUnstableTransaction() {
 	var err error
 	for err == nil && service.status.Current() == START {
 		var tx entities.Transaction

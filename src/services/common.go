@@ -72,8 +72,8 @@ func GetInitedServices() []*BaseService {
 	if GetCollectService().IsInit() {
 		svcs = append(svcs, (*BaseService)(unsafe.Pointer(GetCollectService())))
 	}
-	if GetNotifyService().IsInit() {
-		svcs = append(svcs, (*BaseService)(unsafe.Pointer(GetNotifyService())))
+	if GetStableService().IsInit() {
+		svcs = append(svcs, (*BaseService)(unsafe.Pointer(GetStableService())))
 	}
 	if GetDepositService().IsInit() {
 		svcs = append(svcs, (*BaseService)(unsafe.Pointer(GetDepositService())))

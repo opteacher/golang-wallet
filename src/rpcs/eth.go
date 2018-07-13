@@ -315,12 +315,15 @@ func (rpc *eth) GetBalance(address string) (float64, error) {
 	if resp, err = rpc.sendRequest("eth_getBalance", params, id); err != nil {
 		return -1, utils.LogIdxEx(utils.ERROR, 31, err)
 	}
+	if resp.Result == nil {
+		return -1, nil
+	}
 
 	result := resp.Result.(string)
 	if result[0:2] == "0x" {
 		result = result[2:]
 	}
-	var balanceBig *big.Float
+	balanceBig := big.NewFloat(0)
 	if balanceBig, _, err = balanceBig.Parse(result, 16); err != nil {
 		return -1, utils.LogIdxEx(utils.ERROR, 41, err)
 	}
@@ -337,6 +340,14 @@ func (rpc *eth) GetNewAddress() (string, error) {
 		return "", utils.LogIdxEx(utils.ERROR, 36, err)
 	}
 	return resp.Result.(string), nil
+}
+
+func (rpc *eth) ValidAddress(address string) (bool, error) {
+	if balance, err := rpc.GetBalance(address); err != nil || balance == -1 {
+		return false, err
+	} else {
+		return true, nil
+	}
 }
 
 func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {

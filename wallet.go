@@ -27,7 +27,7 @@ func runServices() {
 
 var depositServices = []*services.BaseService {
 	(*services.BaseService)(unsafe.Pointer(services.GetDepositService())),
-	(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
+	(*services.BaseService)(unsafe.Pointer(services.GetStableService())),
 }
 
 var collectServices = []*services.BaseService {
@@ -37,7 +37,7 @@ var collectServices = []*services.BaseService {
 var withdrawServices = []*services.BaseService {
 	(*services.BaseService)(unsafe.Pointer(services.GetHeightService())),
 	(*services.BaseService)(unsafe.Pointer(services.GetWithdrawService())),
-	(*services.BaseService)(unsafe.Pointer(services.GetNotifyService())),
+	(*services.BaseService)(unsafe.Pointer(services.GetStableService())),
 }
 
 func main() {

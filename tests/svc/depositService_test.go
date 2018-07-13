@@ -12,7 +12,7 @@ func TestDepositService(t *testing.T) {
 
 	//Test service
 	depositService := services.GetDepositService()
-	notifyService := services.GetNotifyService()
+	notifyService := services.GetStableService()
 	depositService.Init()
 	notifyService.Init()
 
