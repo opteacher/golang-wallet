@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"rpcs"
 	"io/ioutil"
+	"net"
 )
 
 const WithdrawPath = "/api/withdraw"
@@ -74,7 +75,7 @@ func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]in
 	w.Write(respJSON)
 }
 
-func RootHandler(w http.ResponseWriter, req *http.Request) {
+func HttpHandler(w http.ResponseWriter, req *http.Request) {
 	utils.LogMsgEx(utils.INFO, "%s\t\t%s", req.Method, req.RequestURI)
 	switch {
 	case len(req.RequestURI) >= WpLen && req.RequestURI[:WpLen] == WithdrawPath:
@@ -91,6 +92,19 @@ func RootHandler(w http.ResponseWriter, req *http.Request) {
 		respJSON , _:= json.Marshal(resp)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(respJSON)
+	}
+}
+
+func SocketHandler(conn net.Conn) {
+	buffer := make([]byte, 2048)
+	for {
+		var n int
+		var err error
+		if n, err = conn.Read(buffer); err != nil {
+			utils.LogMsgEx(utils.ERROR, "SOCKET连接错误：%v", err)
+			return
+		}
+		utils.LogMsgEx(utils.INFO, "SOCKET\t%s", string(buffer[:n]))
 	}
 }
 

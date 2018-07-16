@@ -1,21 +1,21 @@
 package main
 
 import (
-	"os"
 	"utils"
 	"services"
 	"unsafe"
-	"os/signal"
 	"net/http"
 	"apis"
 	"log"
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
 )
 
 func initServices(svcs []*services.BaseService) {
 	for _, svc := range svcs {
 		svc.Init()
-		svc.Start()
 	}
 }
 
@@ -23,6 +23,39 @@ func runServices() {
 	for _, svc := range services.GetInitedServices() {
 		svc.Start()
 	}
+}
+
+func stopServices() {
+	for _, svc := range services.GetInitedServices() {
+		svc.Stop()
+	}
+}
+
+func safeExit() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+
+	<- c
+	utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
+
+	svcStts := make(map[string]int)
+	for notYet := true; notYet; {
+		for _, svc := range services.GetInitedServices() {
+			if !svc.IsDestroy() {
+				if stt, ok := svcStts[svc.Name()]; ok {
+					if stt == svc.CurrentStatus() { continue }
+				}
+				utils.LogMsgEx(utils.WARNING, "%s服务还未安全退出，处于状态：%s",
+					svc.Name(), services.ServiceStatus[svc.CurrentStatus()])
+				svcStts[svc.Name()] = svc.CurrentStatus()
+				notYet = true
+				break
+			} else {
+				notYet = false
+			}
+		}
+	}
+	utils.LogMsgEx(utils.INFO, "退出完毕", nil)
 }
 
 var depositServices = []*services.BaseService {
@@ -60,42 +93,45 @@ func main() {
 	runServices()
 
 	// API的初始化和监听
-	svcs := services.GetInitedServices()
-	if bsSet.APIs.RPC.Active {
-		utils.LogMsgEx(utils.INFO, "服务器监听于：%d", bsSet.APIs.RPC.Port)
-		http.HandleFunc("/", apis.RootHandler)
-		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", bsSet.APIs.RPC.Port), nil))
-
-		utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
-		for _, svc := range svcs { svc.Stop() }
-	} else {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, os.Kill)
-
+	switch {
+	case bsSet.APIs.RPC.Active:
 		go func() {
-			<- c
+			utils.LogMsgEx(utils.INFO, "HTTP服务器监听于：%d", bsSet.APIs.RPC.Port)
+			http.HandleFunc("/", apis.HttpHandler)
+			port := 8037
+			if bsSet.APIs.RPC.Port != 0 {
+				port = bsSet.APIs.RPC.Port
+			}
+			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+
 			utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
-			for _, svc := range svcs { svc.Stop() }
+			stopServices()
+		}()
+	fallthrough
+	case bsSet.APIs.Socket.Active:
+		go func() {
+			utils.LogMsgEx(utils.INFO, "SOCKET服务器监听于：%d", bsSet.APIs.Socket.Port)
+			url := fmt.Sprintf("localhost:%d", bsSet.APIs.Socket.Port)
+			var socket net.Listener
+			var err error
+			if socket, err = net.Listen("tcp", url); err != nil {
+				log.Fatal(err)
+			}
+			defer socket.Close()
+			for {
+				var conn net.Conn
+				if conn, err = socket.Accept(); err != nil {
+					utils.LogMsgEx(utils.WARNING, "接收SOCKET信息错误：%v", err)
+					continue
+				}
+				utils.LogMsgEx(utils.INFO, "接收来自：%s的消息", conn.RemoteAddr().String())
+				apis.SocketHandler(conn)
+			}
+			utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
+			stopServices()
 		}()
 	}
 
 	// 处理服务安全退出
-	svcStts := make(map[string]int)
-	for notYet := true; notYet; {
-		for _, svc := range svcs {
-			if !svc.IsDestroy() {
-				if stt, ok := svcStts[svc.Name()]; ok {
-					if stt == svc.CurrentStatus() { continue }
-				}
-				utils.LogMsgEx(utils.WARNING, "%s服务还未安全退出，处于状态：%s",
-					svc.Name(), services.ServiceStatus[svc.CurrentStatus()])
-				svcStts[svc.Name()] = svc.CurrentStatus()
-				notYet = true
-				break
-			} else {
-				notYet = false
-			}
-		}
-	}
-	utils.LogMsgEx(utils.INFO, "退出完毕", nil)
+	safeExit()
 }

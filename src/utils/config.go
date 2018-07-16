@@ -17,6 +17,10 @@ type baseSetting struct {
 			Active bool	`json:"active"`
 			Port int	`json:"port"`
 		}				`json:"rpc"`
+		Socket struct {
+			Active bool	`json:"active"`
+			Port int	`json:"port"`
+		}				`json:"socket"`
 	}					`json:"apis"`
 }
 

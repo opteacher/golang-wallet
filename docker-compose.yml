@@ -3,6 +3,6 @@ services:
   wallet-service:
     build: .
     volumes:
-      - ~\.ssh:/home/opower/.ssh
+      - ~/.ssh:/home/opower/.ssh
     ports:
       - "127.0.0.1:8037:8037"

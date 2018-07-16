@@ -48,4 +48,20 @@ func TestLang(t *testing.T) {
 		log.Println(ttttt.Mul(ttttt, big.NewFloat(math.Pow10(-18))).String())
 		log.Println(y)
 	}
+
+	aa := 1
+	bb := 2
+	cc := 3
+	switch {
+	case aa == 1:
+		fmt.Println("aa")
+	fallthrough
+	case bb == 2:
+		fmt.Println("bb")
+	fallthrough
+	case cc == 3:
+		fmt.Println("cc")
+	default:
+		fmt.Println("dd")
+	}
 }

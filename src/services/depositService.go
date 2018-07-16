@@ -193,6 +193,12 @@ func (service *depositService) startScanChain() {
 			utils.LogMsgEx(utils.INFO, "块高更新到：%d", service.height)
 		}
 		service.height++
+
+		// 更新块高到进度redis
+		if _, err = dao.GetProcessDAO().UpdateHeight(coinSet.Name, service.height); err != nil {
+			utils.LogMsgEx(utils.ERROR, "更新块高失败：%v", err)
+			continue
+		}
 	}
 	close(toNotifySig)
 	service.status.TurnTo(DESTORY)
