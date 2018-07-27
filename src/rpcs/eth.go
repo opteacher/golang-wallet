@@ -84,7 +84,6 @@ func (rpc *eth) strProp(tx map[string]interface{}, key string) (string, error) {
 	}
 	return itfc.(string), nil
 }
-
 func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Float, error) {
 	var err error
 	var numTmp = big.NewFloat(0)
@@ -103,7 +102,6 @@ func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Float, erro
 	}
 	return numTmp, nil
 }
-
 func (rpc *eth) sendRequest(method string, params []interface {}, id string) (EthSucceedResp, error)  {
 	reqBody := RequestBody { method, params, id }
 	reqStr, err := json.Marshal(reqBody)
@@ -139,7 +137,6 @@ func (rpc *eth) sendRequest(method string, params []interface {}, id string) (Et
 	}
 	return resBody, err
 }
-
 func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 	var err error
 	// 发送请求获取指定高度的块
@@ -201,7 +198,6 @@ func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 	}
 	return transactions, nil
 }
-
 func (rpc *eth) GetCurrentHeight() (uint64, error) {
 	var err error
 	var resp EthSucceedResp
@@ -216,7 +212,6 @@ func (rpc *eth) GetCurrentHeight() (uint64, error) {
 	}
 	return strconv.ParseUint(strHeight, 16, 64)
 }
-
 func (rpc *eth) GetDepositAmount() (map[string]float64, error) {
 	var err error
 	addrAmount := make(map[string]float64)
@@ -243,7 +238,6 @@ func (rpc *eth) GetDepositAmount() (map[string]float64, error) {
 	}
 	return addrAmount, nil
 }
-
 func (rpc *eth) SendTransaction(from string, to string, amount float64, password string) (string, error) {
 	var err error
 	coinSet := utils.GetConfig().GetCoinSettings()
@@ -296,17 +290,14 @@ func (rpc *eth) SendTransaction(from string, to string, amount float64, password
 		return resp.Result.(string), nil
 	}
 }
-
 func (rpc *eth) SendFrom(from string, amount float64) (string, error) {
 	coinSet := utils.GetConfig().GetCoinSettings()
 	return rpc.SendTransaction(from, coinSet.Collect, amount, coinSet.TradePassword)
 }
-
 func (rpc *eth) SendTo(to string, amount float64) (string, error) {
 	coinSet := utils.GetConfig().GetCoinSettings()
 	return rpc.SendTransaction(coinSet.Withdraw, to, amount, coinSet.TradePassword)
 }
-
 func (rpc *eth) GetBalance(address string) (float64, error) {
 	var err error
 	var resp EthSucceedResp
@@ -330,7 +321,6 @@ func (rpc *eth) GetBalance(address string) (float64, error) {
 	ret, _ := balanceBig.Mul(balanceBig, big.NewFloat(math.Pow10(-rpc.decimal))).Float64()
 	return ret, nil
 }
-
 func (rpc *eth) GetNewAddress() (string, error) {
 	var err error
 	var resp EthSucceedResp
@@ -341,7 +331,6 @@ func (rpc *eth) GetNewAddress() (string, error) {
 	}
 	return resp.Result.(string), nil
 }
-
 func (rpc *eth) ValidAddress(address string) (bool, error) {
 	if balance, err := rpc.GetBalance(address); err != nil || balance == -1 {
 		return false, err
@@ -349,7 +338,6 @@ func (rpc *eth) ValidAddress(address string) (bool, error) {
 		return true, nil
 	}
 }
-
 func (rpc *eth) GetTransaction(txHash string) ([]entities.Transaction, error) {
 	var err error
 	var resp EthSucceedResp
@@ -385,7 +373,6 @@ func (rpc *eth) GetTransaction(txHash string) ([]entities.Transaction, error) {
 	tx.Amount, _ = numTmp.Mul(numTmp, big.NewFloat(math.Pow10(-rpc.decimal))).Float64()
 	return []entities.Transaction { tx }, nil
 }
-
 func (rpc *eth) GetTxExistsHeight(txHash string) (uint64, error) {
 	var err error
 	var resp EthSucceedResp

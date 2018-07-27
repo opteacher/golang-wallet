@@ -28,6 +28,7 @@ var wdRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodPost, withdrawPath):	doWithdraw,
 	fmt.Sprintf("%s %s", http.MethodGet, withdrawPath):		getWithdraw,
 	fmt.Sprintf("%s %s", http.MethodGet, validAddrPath):	validAddress,
+	fmt.Sprintf("%s %s", http.MethodDelete, withdrawPath):	cancelWithdraw,
 }
 
 func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
@@ -124,7 +125,6 @@ func doWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(resp)
 	return []byte(ret)
 }
-
 func getWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
 	re := regexp.MustCompile(withdrawPath)
@@ -163,7 +163,6 @@ func getWithdraw(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(resp)
 	return ret
 }
-
 func validAddress(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
 	re := regexp.MustCompile(validAddrPath)
@@ -194,4 +193,8 @@ func validAddress(w http.ResponseWriter, req *http.Request) []byte {
 	resp.Data = isValid
 	ret, _ := json.Marshal(resp)
 	return ret
+}
+func cancelWithdraw(w http.ResponseWriter, req *http.Request) []byte {
+	// @_@
+	return []byte {}
 }

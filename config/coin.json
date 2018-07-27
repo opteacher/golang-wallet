@@ -8,7 +8,7 @@
 	"collect": "0xb78f085e2759baf782c705cd3a9fcb5d39fa7b3c",
 	"minCollect": 0.0001,
 	"collectInterval": 30,
-	"tradePassword": "",
+	"deposit": "",
 	"unlockDuration": 0,
 	"withdraw": "0x1c6f567e577a351917615fb1c8f1222dc96ba18d"
 }

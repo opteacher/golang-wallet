@@ -26,3 +26,7 @@ func TestGetNewAddress(t *testing.T) {
 func TestBtcGetBalance(t *testing.T) {
 	fmt.Println(rpcs.GetRPC("BTC").GetBalance(""))
 }
+
+func TestBtcGetDepositAmount(t *testing.T) {
+	fmt.Println(rpcs.GetRPC("BTC").GetDepositAmount())
+}
