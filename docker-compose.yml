@@ -6,3 +6,4 @@ services:
       - ~/.ssh:/home/opower/.ssh
     ports:
       - "127.0.0.1:8037:8037"
+      - "8038:8038"

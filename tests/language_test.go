@@ -7,6 +7,7 @@ import (
 	"testing"
 	"math/big"
 	"math"
+	"strings"
 )
 
 type itfc interface {
@@ -64,4 +65,6 @@ func TestLang(t *testing.T) {
 	default:
 		fmt.Println("dd")
 	}
+
+	fmt.Println(strings.Split("abcd", "."))
 }

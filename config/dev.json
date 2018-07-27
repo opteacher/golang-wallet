@@ -16,5 +16,18 @@
 				"url": "101.132.121.47:6379"
 			}
 		]
+	},
+	"apis": {
+		"rpc": {
+			"active": true,
+			"port": 8037
+		},
+		"mq": {
+			"active": true
+		},
+		"socket": {
+			"active": true,
+			"port": 8038
+		}
 	}
 }

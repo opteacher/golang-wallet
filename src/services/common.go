@@ -104,13 +104,16 @@ func TxIntoStable(txHash string, asset string) error {
 	}
 
 	// 添加交易进数据库
-	var tx entities.Transaction
-	if tx, err = rpcs.GetRPC(asset).GetTransaction(txHash); err != nil {
+	var txs []entities.Transaction
+	if txs, err = rpcs.GetRPC(asset).GetTransaction(txHash); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "从链查询交易失败：%v", err)
 	}
-	if _, err = dao.GetTransactionDAO().AddTransaction(tx,
-		fmt.Sprintf("%s_%d", process.Type, process.Id)); err != nil {
+	for _, tx := range txs {
+		if _, err = dao.GetTransactionDAO().AddTransaction(tx,
+			fmt.Sprintf("%s_%d", process.Type, process.Id),
+		); err != nil {
 			return utils.LogMsgEx(utils.ERROR, "插入交易表失败：%v", err)
+		}
 	}
 
 	utils.LogMsgEx(utils.INFO, "交易完成：%s", txHash)

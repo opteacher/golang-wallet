@@ -15,7 +15,8 @@ type Rpc interface {
 	SendTo(to string, amount float64) (string, error)
 	GetNewAddress() (string, error)
 	ValidAddress(address string) (bool, error)
-	GetTransaction(txHash string) (entities.Transaction, error)
+	GetTransaction(txHash string) ([]entities.Transaction, error)
+	GetTxExistsHeight(txHash string) (uint64, error)
 }
 
 type rpc struct {

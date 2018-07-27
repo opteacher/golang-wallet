@@ -4,15 +4,10 @@ import (
 	"net/http"
 	"regexp"
 	"encoding/json"
-	"entities"
-	"dao"
 	"fmt"
 	"utils"
 	"strings"
 	"reflect"
-	"strconv"
-	"rpcs"
-	"io/ioutil"
 	"net"
 )
 
@@ -20,8 +15,10 @@ const WithdrawPath = "/api/withdraw"
 const WpLen = len(WithdrawPath)
 const DepositPath = "/api/deposit"
 const DpLen = len(DepositPath)
-const CommonPath = "/api/common"
-const CmLen = len(CommonPath)
+const ProcessPath = "/api/process"
+const PcsLen = len(ProcessPath)
+const TransferPath = "/api/transfer"
+const TxLen = len(TransferPath)
 
 type RespVO struct {
 	Code int			`json:"code"`
@@ -82,8 +79,10 @@ func HttpHandler(w http.ResponseWriter, req *http.Request) {
 		subHandler(w, req, wdRouteMap)
 	case len(req.RequestURI) >= DpLen && req.RequestURI[:DpLen] == DepositPath:
 		subHandler(w, req, dpRouteMap)
-	case len(req.RequestURI) >= CmLen && req.RequestURI[:CmLen] == CommonPath:
-		subHandler(w, req, cmRouteMap)
+	case len(req.RequestURI) >= TxLen && req.RequestURI[:TxLen] == TransferPath:
+		subHandler(w, req, txRouteMap)
+	case len(req.RequestURI) >= PcsLen && req.RequestURI[:PcsLen] == ProcessPath:
+		subHandler(w, req, pcsRouteMap)
 	default:
 		utils.LogIdxEx(utils.WARNING, 37, req.RequestURI)
 		var resp RespVO
@@ -106,125 +105,4 @@ func SocketHandler(conn net.Conn) {
 		}
 		utils.LogMsgEx(utils.INFO, "SOCKET\t%s", string(buffer[:n]))
 	}
-}
-
-const getProcessPath	= "^/api/common/([A-Z]{3,})/process/([a-zA-Z0-9]{1,})"
-const transferPath		= "^/api/common/([A-Z]{3,})/transfer$"
-
-var cmRouteMap = map[string]interface {} {
-	fmt.Sprintf("%s %s", http.MethodGet, getProcessPath): queryProcess,
-	fmt.Sprintf("%s %s", http.MethodPost, transferPath): transfer,
-}
-
-func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
-	var resp RespVO
-	re := regexp.MustCompile(getProcessPath)
-	params := re.FindStringSubmatch(req.RequestURI)[1:]
-	if len(params) == 0 {
-		resp.Code = 500
-		resp.Msg = "需要指定币种的名字"
-		ret, _ := json.Marshal(resp)
-		return ret
-	}
-	if len(params) == 1 {
-		resp.Code = 500
-		resp.Msg = "需要指定查询的操作ID或交易哈希"
-		ret, _ := json.Marshal(resp)
-		return ret
-	}
-
-	coinName := params[0]
-	txId := params[1]
-
-	var err error
-	var id int64 = -1
-	var typ string
-	if id, err = strconv.ParseInt(txId, 10, 64); err == nil {
-		typ = strings.ToUpper(req.URL.Query().Get("type"))
-		if typ != entities.WITHDRAW && typ != entities.DEPOSIT {
-			resp.Code = 500
-			resp.Msg = "用操作id查询进度，需附带操作类型：WITHDRAW/DEPOSIT"
-			ret, _ := json.Marshal(resp)
-			return ret
-		}
-	}
-
-	var process entities.DatabaseProcess
-	if id == -1 {
-		if process, err = dao.GetProcessDAO().QueryProcessByTypAndId(coinName, typ, int(id)); err != nil {
-			resp.Code = 500
-			resp.Msg = err.Error()
-			ret, _ := json.Marshal(resp)
-			return ret
-		}
-	} else {
-		if process, err = dao.GetProcessDAO().QueryProcessByTxHash(coinName, txId); err != nil {
-			resp.Code = 500
-			resp.Msg = err.Error()
-			ret, _ := json.Marshal(resp)
-			return ret
-		}
-	}
-
-	resp.Code = 200
-	resp.Data = process
-	ret, _ := json.Marshal(resp)
-	return ret
-}
-
-type transactionReq struct {
-	From string		`json:"from"`
-	To string		`json:"to"`
-	Amount float64	`json:"amount"`
-}
-
-func transfer(w http.ResponseWriter, req *http.Request) []byte {
-	var resp RespVO
-	re := regexp.MustCompile(transferPath)
-	params := re.FindStringSubmatch(req.RequestURI)[1:]
-	if len(params) == 0 {
-		resp.Code = 500
-		resp.Msg = "需要指定币种的名字"
-		ret, _ := json.Marshal(resp)
-		return ret
-	}
-
-	// 参数解析
-	var body []byte
-	var err error
-	if body, err = ioutil.ReadAll(req.Body); err != nil {
-		utils.LogMsgEx(utils.WARNING, "解析请求体错误：%v", err)
-		resp.Code = 500
-		resp.Msg = err.Error()
-		ret, _ := json.Marshal(resp)
-		return ret
-	}
-	defer req.Body.Close()
-
-	utils.LogMsgEx(utils.INFO, "收到交易请求：%s", string(body))
-
-	var txReq transactionReq
-	if err = json.Unmarshal(body, &txReq); err != nil {
-		utils.LogIdxEx(utils.WARNING, 38, err)
-		resp.Code = 500
-		resp.Msg = err.Error()
-		ret, _ := json.Marshal(resp)
-		return ret
-	}
-
-	rpc := rpcs.GetRPC(params[0])
-	var txHash string
-	tradePwd := utils.GetConfig().GetCoinSettings().TradePassword
-	if txHash, err = rpc.SendTransaction(txReq.From, txReq.To, txReq.Amount, tradePwd); err != nil {
-		utils.LogMsgEx(utils.ERROR, "发送交易失败：%v", err)
-		resp.Code = 500
-		resp.Msg = err.Error()
-		ret, _ := json.Marshal(resp)
-		return ret
-	}
-
-	resp.Code = 200
-	resp.Data = txHash
-	ret, _ := json.Marshal(resp)
-	return []byte(ret)
 }

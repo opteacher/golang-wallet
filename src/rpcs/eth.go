@@ -350,7 +350,7 @@ func (rpc *eth) ValidAddress(address string) (bool, error) {
 	}
 }
 
-func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
+func (rpc *eth) GetTransaction(txHash string) ([]entities.Transaction, error) {
 	var err error
 	var resp EthSucceedResp
 	var tx entities.Transaction
@@ -358,7 +358,7 @@ func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
 	if resp, err = rpc.sendRequest("eth_getTransactionByHash", []interface {} {
 		txHash,
 	}, id); err != nil {
-		return tx, utils.LogIdxEx(utils.ERROR, 37, err)
+		return []entities.Transaction {}, utils.LogIdxEx(utils.ERROR, 37, err)
 	}
 	result := resp.Result.(map[string]interface {})
 
@@ -380,8 +380,29 @@ func (rpc *eth) GetTransaction(txHash string) (entities.Transaction, error) {
 	tx.To = result["to"].(string)
 	tx.BlockHash = result["blockHash"].(string)
 	if numTmp, err = rpc.numProp(result, "value"); err != nil {
-		return tx, utils.LogIdxEx(utils.ERROR, 41, err)
+		return []entities.Transaction {}, utils.LogIdxEx(utils.ERROR, 41, err)
 	}
 	tx.Amount, _ = numTmp.Mul(numTmp, big.NewFloat(math.Pow10(-rpc.decimal))).Float64()
-	return tx, nil
+	return []entities.Transaction { tx }, nil
+}
+
+func (rpc *eth) GetTxExistsHeight(txHash string) (uint64, error) {
+	var err error
+	var resp EthSucceedResp
+	id := fmt.Sprintf("%d", rand.Intn(1000))
+	if resp, err = rpc.sendRequest("eth_getTransactionByHash", []interface {} {
+		txHash,
+	}, id); err != nil {
+		return 0, utils.LogIdxEx(utils.ERROR, 37, err)
+	}
+	result := resp.Result.(map[string]interface {})
+
+	var numTmp *big.Float
+	var height uint64
+	if numTmp, err = rpc.numProp(result, "blockNumber"); err != nil {
+		return 0, utils.LogIdxEx(utils.ERROR, 37, err)
+	} else {
+		height, _ = numTmp.Uint64()
+		return height, nil
+	}
 }

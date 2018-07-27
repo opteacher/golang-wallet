@@ -2,18 +2,5 @@
 	"env": "dev",
 	"services": [
 		"withdraw", "deposit"
-	],
-	"apis": {
-		"rpc": {
-			"active": true,
-			"port": 8037
-		},
-		"mq": {
-			"active": true
-		},
-		"socket": {
-			"active": true,
-			"port": 8038
-		}
-	}
+	]
 }

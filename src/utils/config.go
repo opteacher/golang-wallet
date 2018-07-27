@@ -12,16 +12,6 @@ import (
 type baseSetting struct {
 	Env string			`json:"env"`
 	Services []string	`json:"services"`
-	APIs struct {
-		RPC struct {
-			Active bool	`json:"active"`
-			Port int	`json:"port"`
-		}				`json:"rpc"`
-		Socket struct {
-			Active bool	`json:"active"`
-			Port int	`json:"port"`
-		}				`json:"socket"`
-	}					`json:"apis"`
 }
 
 type subsSetting struct {
@@ -41,6 +31,16 @@ type subsSetting struct {
 			Url string		`json:"url"`
 		}					`json:"clusters"`
 	}						`json:"redis"`
+	APIs struct {
+		RPC struct {
+			Active bool	`json:"active"`
+			Port int	`json:"port"`
+		}				`json:"rpc"`
+		Socket struct {
+			Active bool	`json:"active"`
+			Port int	`json:"port"`
+		}				`json:"socket"`
+	}					`json:"apis"`
 }
 
 type coinSetting struct {
@@ -48,6 +48,8 @@ type coinSetting struct {
 	Url string						`json:"url"`
 	Decimal int						`json:"decimal"`
 	Stable int						`json:"stable"`
+	RPCUser string					`json:"rpcUser"`
+	RPCPassword string				`json:"rpcPassword"`
 	Collect string					`json:"collect"`
 	MinCollect float64				`json:"minCollect"`
 	CollectInterval time.Duration	`json:"collectInterval"`

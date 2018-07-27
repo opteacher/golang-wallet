@@ -75,6 +75,7 @@ var withdrawServices = []*services.BaseService {
 
 func main() {
 	bsSet := utils.GetConfig().GetBaseSettings()
+	sbSet := utils.GetConfig().GetSubsSettings()
 
 	// 服务的初始化和启动
 	if len(bsSet.Services) == 0 {
@@ -94,13 +95,13 @@ func main() {
 
 	// API的初始化和监听
 	switch {
-	case bsSet.APIs.RPC.Active:
+	case sbSet.APIs.RPC.Active:
 		go func() {
-			utils.LogMsgEx(utils.INFO, "HTTP服务器监听于：%d", bsSet.APIs.RPC.Port)
+			utils.LogMsgEx(utils.INFO, "HTTP服务器监听于：%d", sbSet.APIs.RPC.Port)
 			http.HandleFunc("/", apis.HttpHandler)
 			port := 8037
-			if bsSet.APIs.RPC.Port != 0 {
-				port = bsSet.APIs.RPC.Port
+			if sbSet.APIs.RPC.Port != 0 {
+				port = sbSet.APIs.RPC.Port
 			}
 			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
@@ -108,10 +109,10 @@ func main() {
 			stopServices()
 		}()
 	fallthrough
-	case bsSet.APIs.Socket.Active:
+	case sbSet.APIs.Socket.Active:
 		go func() {
-			utils.LogMsgEx(utils.INFO, "SOCKET服务器监听于：%d", bsSet.APIs.Socket.Port)
-			url := fmt.Sprintf("localhost:%d", bsSet.APIs.Socket.Port)
+			utils.LogMsgEx(utils.INFO, "SOCKET服务器监听于：%d", sbSet.APIs.Socket.Port)
+			url := fmt.Sprintf("localhost:%d", sbSet.APIs.Socket.Port)
 			var socket net.Listener
 			var err error
 			if socket, err = net.Listen("tcp", url); err != nil {
