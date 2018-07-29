@@ -67,6 +67,7 @@ type coinSetting struct {
 	RPCUser string					`json:"rpcUser"`
 	RPCPassword string				`json:"rpcPassword"`
 	Collect string					`json:"collect"`
+	Deposit string					`json:"deposit"`
 	MinCollect float64				`json:"minCollect"`
 	CollectInterval time.Duration	`json:"collectInterval"`
 	TradePassword string			`json:"tradePassword"`

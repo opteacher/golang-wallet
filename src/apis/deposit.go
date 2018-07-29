@@ -56,7 +56,6 @@ func newAddress(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(resp)
 	return ret
 }
-
 func queryHeight(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
 	re := regexp.MustCompile(getHeightPath)
@@ -85,7 +84,6 @@ func queryHeight(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(resp)
 	return ret
 }
-
 func getDeposits(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
 	re := regexp.MustCompile(getDepositsPath)

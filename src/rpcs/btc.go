@@ -46,7 +46,7 @@ func (rpc *btc) create() {
 	rpc.Stable		= setting.Stable
 	rpc.rpcUser		= setting.RPCUser
 	rpc.rpcPassword	= setting.RPCPassword
-	rpc.account		= setting.TradePassword
+	rpc.account		= setting.Deposit
 }
 
 type BtcResp struct {
@@ -129,7 +129,11 @@ func (rpc *btc) GetCurrentHeight() (uint64, error) {
 	return uint64(resp.Result.(float64)), nil
 }
 func (rpc *btc) GetDepositAmount() (map[string]float64, error) {
-	return nil, nil
+	if balance, err := rpc.GetBalance(rpc.account); err != nil {
+		return map[string]float64 {}, err
+	} else {
+		return map[string]float64 { rpc.account: balance }, nil
+	}
 }
 func (rpc *btc) GetBalance(address string) (float64, error) {
 	var err error
@@ -140,11 +144,17 @@ func (rpc *btc) GetBalance(address string) (float64, error) {
 	return resp.Result.(float64) * math.Pow10(-rpc.decimal), nil
 }
 func (rpc *btc) SendTransaction(from string, to string, amount float64, password string) (string, error) {
-	return "", nil
+	params := []interface {} { from, to }
+	params = append(params, math.Floor(amount * math.Pow10(rpc.decimal)))
+	if resp, err := rpc.sendRequest("sendfrom", params); err != nil {
+		return "", utils.LogIdxEx(utils.ERROR, 35, err)
+	} else {
+		return resp.Result.(string), nil
+	}
 }
 func (rpc *btc) SendFrom(from string, amount float64) (string, error) {
 	coinSet := utils.GetConfig().GetCoinSettings()
-	return rpc.SendTransaction(from, coinSet.Collect, amount, coinSet.TradePassword)
+	return rpc.SendTransaction(rpc.account, coinSet.Collect, amount, rpc.account)
 }
 func (rpc *btc) SendTo(to string, amount float64) (string, error) {
 	coinSet := utils.GetConfig().GetCoinSettings()
@@ -159,6 +169,21 @@ func (rpc *btc) GetNewAddress() (string, error) {
 	return resp.Result.(string), nil
 }
 func (rpc *btc) ValidAddress(address string) (bool, error) {
+	if resp, err := rpc.sendRequest("validateaddress", []interface {} { address }); err != nil {
+		return false, utils.LogMsgEx(utils.ERROR, "地址验证错误：%v", err)
+	} else {
+		result := utils.JsonObject {
+			Data: resp.Result.(map[string]interface {}),
+		}
+		if !result.Contain("isvalid") {
+			return false, nil
+		}
+		if tmp, err := result.Get("isvalid"); err != nil {
+			return false, err
+		} else {
+			return tmp.(bool), nil
+		}
+	}
 	return false, nil
 }
 func (rpc *btc) GetTransaction(txHash string) ([]entities.Transaction, error) {
@@ -212,7 +237,6 @@ func (rpc *btc) GetTransaction(txHash string) ([]entities.Transaction, error) {
 	}
 	return txs, nil
 }
-
 func (rpc *btc) GetTxExistsHeight(txHash string) (uint64, error) {
 	var err error
 	var resp BtcResp
