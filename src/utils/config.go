@@ -40,7 +40,23 @@ type subsSetting struct {
 			Active bool	`json:"active"`
 			Port int	`json:"port"`
 		}				`json:"socket"`
+		MQ struct {
+			Active bool	`json:"active"`
+		}				`json:"mq"`
 	}					`json:"apis"`
+	Callbacks struct {
+		Redis struct {
+			Active bool	`json:"active"`
+		}				`json:"redis"`
+		RPC struct {
+			Active bool	`json:"active"`
+			DepositURL string	`json:"deposit_url"`
+			WithdrawURL string	`json:"withdraw_url"`
+		}				`json:"rpc"`
+		MQ struct {
+			Active bool	`json:"active"`
+		}				`json:"mq"`
+	}					`json:"callbacks"`
 }
 
 type coinSetting struct {

@@ -13,17 +13,17 @@ import (
 )
 
 var _timeFormat = map[string]string {
-	"ANSIC": time.ANSIC,
-	"UnixDate": time.UnixDate,
-	"RubyDate": time.RubyDate,
-	"RFC822": time.RFC822,
-	"RFC822Z": time.RFC822Z,
-	"RFC850": time.RFC850,
-	"RFC1123": time.RFC1123,
-	"RFC1123Z": time.RFC1123Z,
-	"RFC3339": time.RFC3339,
-	"RFC3339Nano": time.RFC3339Nano,
-	"Kitchen": time.Kitchen,
+	"ANSIC":		time.ANSIC,
+	"UnixDate":		time.UnixDate,
+	"RubyDate":		time.RubyDate,
+	"RFC822":		time.RFC822,
+	"RFC822Z":		time.RFC822Z,
+	"RFC850":		time.RFC850,
+	"RFC1123":		time.RFC1123,
+	"RFC1123Z":		time.RFC1123Z,
+	"RFC3339":		time.RFC3339,
+	"RFC3339Nano":	time.RFC3339Nano,
+	"Kitchen":		time.Kitchen,
 }
 
 type processDao struct {
@@ -143,17 +143,19 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 		cli.Expire(key, 24 * time.Hour)
 	}
 	// 发布这条交易的进度键
-	var procs entities.DatabaseProcess
-	if procs, err = d.queryProcess(key); err != nil {
-		return 0, utils.LogMsgEx(utils.ERROR, "获取进度失败：%v", err)
-	}
-	var strProcs []byte
-	if strProcs, err = json.Marshal(procs); err != nil {
-		return 0, utils.LogIdxEx(utils.ERROR, 22, err)
-	}
-	pocsPubKey := utils.GetConfig().GetSubsSettings().Redis.ProcessPubKey
-	if _, err = cli.Publish(pocsPubKey, strProcs).Result(); err != nil {
-		return 0, utils.LogMsgEx(utils.ERROR, "发布进度错误：%v", err)
+	if utils.GetConfig().GetSubsSettings().Callbacks.Redis.Active {
+		var procs entities.DatabaseProcess
+		if procs, err = d.queryProcess(key); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "获取进度失败：%v", err)
+		}
+		var strProcs []byte
+		if strProcs, err = json.Marshal(procs); err != nil {
+			return 0, utils.LogIdxEx(utils.ERROR, 22, err)
+		}
+		pocsPubKey := utils.GetConfig().GetSubsSettings().Redis.ProcessPubKey
+		if _, err = cli.Publish(pocsPubKey, strProcs).Result(); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "发布进度错误：%v", err)
+		}
 	}
 	return 1, nil
 }

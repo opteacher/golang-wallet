@@ -29,5 +29,18 @@
 			"active": true,
 			"port": 8038
 		}
+	},
+	"callbacks": {
+		"redis": {
+			"active": true
+		},
+		"rpc": {
+			"active": false,
+			"deposit_url": "",
+			"withdraw_url": ""
+		},
+		"mq": {
+			"active": false
+		}
 	}
 }
