@@ -97,7 +97,22 @@ func (service *depositService) startScanChain() {
 	var err error
 	coinSet := utils.GetConfig().GetCoinSettings()
 	rpc := rpcs.GetRPC(coinSet.Name)
+	acc := 0
 	for err == nil && service.status.Current() == START {
+		// 获取当前块高
+		var curHeight uint64
+		if curHeight, err = rpc.GetCurrentHeight(); err != nil {
+			utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
+			continue
+		}
+		if curHeight - service.height <= /*uint64(coinSet.Stable)*/0 {
+			if acc % 500 == 0 {
+				utils.LogMsgEx(utils.INFO, "已达到最高块高", nil)
+			}
+			acc++
+			continue
+		}
+
 		utils.LogMsgEx(utils.INFO, "块高: %d", service.height)
 
 		// 获取指定高度的交易
@@ -135,13 +150,6 @@ func (service *depositService) startScanChain() {
 			// 持久化到数据库
 			if _, err = dao.GetDepositDAO().AddScannedDeposit(&deposit); err != nil {
 				utils.LogMsgEx(utils.ERROR, "添加未稳定提币记录失败：%v", err)
-				continue
-			}
-
-			// 获取当前块高
-			var curHeight uint64
-			if curHeight, err = rpc.GetCurrentHeight(); err != nil {
-				utils.LogMsgEx(utils.ERROR, "获取块高失败：%v", err)
 				continue
 			}
 

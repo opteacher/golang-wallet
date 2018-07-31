@@ -8,6 +8,19 @@
 		"2": "消息",
 		"3": "测试"
 	},
+	"storage": {
+		"file": {
+			"active": true,
+			"split": "level",
+			"split_comment": "level/type default:level",
+			"split_mode": "file",
+			"split_mode_comment": "file/folder default:file",
+			"rotate": "time",
+			"rotate_comment": "time/size default:time",
+			"path": "logs",
+			"nameFormat": "{split}_{time}{suffix}.log"
+		}
+	},
 	"errors": {
 		"E0010": "数据库连接失败：%v",
 		"E0011": "无法找到指定的SQL语句：%s",

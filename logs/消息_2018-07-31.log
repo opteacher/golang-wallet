@@ -1,0 +1,206 @@
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/services/depositService.go:101 [消息] 块高: 0
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/services/depositService.go:101 [消息] 块高: 1
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/depositService.go:101 [消息] 块高: 2
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/services/depositService.go:102 [消息] 块高: 1
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/services/depositService.go:102 [消息] 块高: 1
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/services/depositService.go:102 [消息] 块高: 1
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/services/depositService.go:102 [消息] 块高: 1
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/depositService.go:112 [消息] 已达到最高块高
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/depositService.go:102 [消息] 块高: 1
+/services/heightService.go:37 [消息] initialization
+/services/heightService.go:46 [消息] initialized
+/services/withdrawService.go:54 [消息] initialization
+/services/withdrawService.go:67 [消息] initialized
+/services/stableService.go:49 [消息] initialization
+/services/stableService.go:62 [消息] initialized
+/services/depositService.go:47 [消息] initialization
+/services/depositService.go:64 [消息] initialized
+/services/withdrawService.go:60 [消息] start
+/services/withdrawService.go:75 [消息] started
+/services/stableService.go:55 [消息] start
+/services/stableService.go:68 [消息] started
+/services/depositService.go:57 [消息] start
+/services/depositService.go:68 [消息] started
+/home/george/goProjects/golang-deposit-test/wallet.go:103 [消息] HTTP服务器监听于：8037
+/home/george/goProjects/golang-deposit-test/wallet.go:117 [消息] SOCKET服务器监听于：8038
+/services/depositService.go:110 [消息] 已达到最高块高

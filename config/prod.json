@@ -1,0 +1,46 @@
+{
+	"db": {
+		"url": "127.0.0.1:3306",
+		"name": "test",
+		"username": "root",
+		"password": "59524148chenOP",
+		"max_conn": 20
+	},
+	"redis": {
+		"password": "359062",
+		"time_format": "RFC3339",
+		"process_pub_key": "wallet transactions process",
+		"clusters": [
+			{
+				"name": "main",
+				"url": "127.0.0.1:6379"
+			}
+		]
+	},
+	"apis": {
+		"rpc": {
+			"active": true,
+			"port": 8037
+		},
+		"mq": {
+			"active": true
+		},
+		"socket": {
+			"active": true,
+			"port": 8038
+		}
+	},
+	"callbacks": {
+		"redis": {
+			"active": true
+		},
+		"rpc": {
+			"active": false,
+			"deposit_url": "",
+			"withdraw_url": ""
+		},
+		"mq": {
+			"active": false
+		}
+	}
+}

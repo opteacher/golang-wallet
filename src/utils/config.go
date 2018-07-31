@@ -80,6 +80,16 @@ type msgsSetting struct {
 		Debug bool					`json:"debug"`
 	}								`json:"logs"`
 	Level map[string]string			`json:"level"`
+	Storage struct {
+		File struct {
+			Active bool				`json:"active"`
+			Split string			`json:"split"`
+			SplitMode string		`json:"split_mode"`
+			Rotate string			`json:"rotate"`
+			Path string				`json:"path"`
+			NameFormat string		`json:"nameFormat"`
+		}							`json:"file"`
+	}								`json:"storage"`
 	Errors map[string]string		`json:"errors"`
 	Warnings map[string]string		`json:"warnings"`
 	Information map[string]string	`json:"information"`

@@ -55,7 +55,10 @@ func safeExit() {
 			}
 		}
 	}
-	utils.LogMsgEx(utils.INFO, "退出完毕", nil)
+
+	// 关闭日志的存储介质
+	utils.CloseAllLogStorage()
+	log.Println("退出完毕")
 }
 
 var depositServices = []*services.BaseService {
