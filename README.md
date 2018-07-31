@@ -21,10 +21,10 @@
 	]
 }
 ```
-- | - | -
----|---|---
-env | 使用环境
-services | 开启服务 | withdraw（提币）</br>deposit（充币）</br>collect（归集）
+| - | - | - |
+|---|---|---|
+| env | 使用环境 | |
+| services | 开启服务 | withdraw（提币）</br>deposit（充币）</br>collect（归集） | |
 
 
 * `config/coin.json` 币种相关配置
