@@ -3,3 +3,4 @@ src/github.com
 pkg
 *.exe
 wallet
+logs

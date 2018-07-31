@@ -1,2 +1,0 @@
-/rpcs/btc.go:89 [错误] 字符串转JSON失败：json: cannot unmarshal object into Go struct field BtcResp.error of type string
-/rpcs/btc.go:89 [错误] 字符串转JSON失败：json: cannot unmarshal object into Go struct field BtcResp.error of type string
