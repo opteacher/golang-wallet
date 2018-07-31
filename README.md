@@ -23,8 +23,8 @@
 ```
 | - | - | - |
 |---|---|---|
-| env | 使用环境 | |
-| services | 开启服务 | withdraw（提币）</br>deposit（充币）</br>collect（归集） | |
+| env | 使用环境 |
+| services | 开启服务 | withdraw（提币）</br>deposit（充币）</br>collect（归集） |
 
 
 * `config/coin.json` 币种相关配置
@@ -43,18 +43,18 @@
 }
 ```
 
-- | -
----|---
-name | 币种简称
-url | 钱包节点
-decimal | 币种精度
-stable | 转账到账最低稳定块高（防止支链追赶主链）
-collect | 归集地址
-minCollect | 最小归集金额
-collectInterval | 归集间隔
-tradePassword | 充值账户的交易密钥
-unlockDuration | 解锁充值账户的时间
-withdraw | 提币账户/地址
+| - | - |
+|---|---|
+| name | 币种简称 |
+| url | 钱包节点 |
+| decimal | 币种精度 |
+| stable | 转账到账最低稳定块高（防止支链追赶主链） |
+| collect | 归集地址 |
+| minCollect | 最小归集金额 |
+| collectInterval | 归集间隔 |
+| tradePassword | 充值账户的交易密钥 |
+| unlockDuration | 解锁充值账户的时间 |
+| withdraw | 提币账户/地址 |
 
 * `config/(dev/prod/..).json` 环境配置，可以自定义名字，并在settings.json指定
 ```json
@@ -79,20 +79,20 @@ withdraw | 提币账户/地址
 }
 ```
 
-- | - | - | -
----|---|---|---
-db | 数据库配置
-- | url | 数据库位置
-- | name | 数据库名
-- | username | 登陆用户名
-- | password | 登陆用户密码
-- | max_conn | 连接池最大连接数
-redis | redis缓存配置
-- | password | 查询操作密码
-- | time_format | 存储的时间格式
-- | clusters | 集群列表
-- | - | name | 节点名
-- | - | url | 节点URL
+| - | - | - | - |
+|---|---|---|---|
+| db | 数据库配置 | | |
+| - | url | 数据库位置 | |
+| - | name | 数据库名 | |
+| - | username | 登陆用户名 | |
+| - | password | 登陆用户密码 | |
+| - | max_conn | 连接池最大连接数 | |
+| redis | redis缓存配置 | | |
+| - | password | 查询操作密码 | |
+| - | time_format | 存储的时间格式 | |
+| - | clusters | 集群列表 | |
+| - | - | name | 节点名 |
+| - | - | url | 节点URL |
 
 > 如果集群列表clusters只有一个节点，则会以单客户端形式调用redis
 
