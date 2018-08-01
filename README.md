@@ -145,3 +145,5 @@
 | GET | /api/withdraw/{asset} | tx_hash 交易hash<br/>id 交易id（二选一） | 获取提币交易 |
 | GET | /api/withdraw/{asset}/valid_address/{address} | - | 验证地址有效性 |
 | GET | /api/process/{asset}/txid/{tx_hash} | - | 查询交易进度 |
+
+> 参数的传递方式：POST和PUT请求都是通过application/json方式传递，GET请求通过query方式传递
