@@ -3,11 +3,11 @@
 		"url": "127.0.0.1:3306",
 		"name": "test",
 		"username": "root",
-		"password": "59524148chenOP",
+		"password": "12345",
 		"max_conn": 20
 	},
 	"redis": {
-		"password": "359062",
+		"password": "12345",
 		"time_format": "RFC3339",
 		"process_pub_key": "wallet transactions process",
 		"clusters": [
