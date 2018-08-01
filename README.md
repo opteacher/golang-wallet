@@ -96,3 +96,52 @@
 
 > 如果集群列表clusters只有一个节点，则会以单客户端形式调用redis
 
+* `config/(dev/prod/..).json` 同上
+```json
+{
+    "apis": {
+		"rpc": {
+			"active": true,
+			"port": 8037
+		}
+	},
+	"callbacks": {
+		"redis": {
+			"active": true
+		},
+		"rpc": {
+			"active": false,
+			"deposit_url": "",
+			"withdraw_url": ""
+		}
+	}
+}
+```
+
+| - | - | - | - |
+|---|---|---|---|
+| apis | 外部接口配置 | | |
+| - | rpc | http请求 | 具体接口参照[API接口表]() |
+| - | - | active | 激活 |
+| - | - | port | 占用端口 |
+| callbacks | 交易进度提示的回调配置 | | |
+| - | redis | redis发布响应 | |
+| - | - | active | 激活（使用的是上面定义的redis配置） |
+| - | rpc | http回调 | |
+| - | - | active | 激活 |
+| - | - | deposit_url | 充币URL（格式：[Method] URL） |
+| - | - | withdraw_url | 提币URL（同上） |
+| - | - | collect_url | 归集URL（同上） |
+
+## 使用说明
+* API接口表
+
+| Method | URL | Parameters | - |
+|---|---|---|---|
+| GET | /api/deposit/{asset}/address | - | 获取新地址 |
+| GET | /api/deposit/{asset}/height | - | 获取链最大高度 |
+| GET | /api/deposit/{asset} | tx_hash 交易hash（可选）<br/>address 地址（可选） | 获取充币交易 |
+| POST | /api/withdraw/{asset} | id 提币id<br/>value 金额<br/>target 目标地址 | 提币 |
+| GET | /api/withdraw/{asset} | tx_hash 交易hash<br/>id 交易id（二选一） | 获取提币交易 |
+| GET | /api/withdraw/{asset}/valid_address/{address} | - | 验证地址有效性 |
+| GET | /api/process/{asset}/txid/{tx_hash} | - | 查询交易进度 |
