@@ -4,4 +4,4 @@ pkg
 *.exe
 wallet
 logs
-config
+config/*
