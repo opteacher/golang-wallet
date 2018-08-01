@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"strings"
 	"encoding/json"
+	"net/http"
+	"bytes"
 )
 
 var _timeFormat = map[string]string {
@@ -143,11 +145,11 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 		cli.Expire(key, 24 * time.Hour)
 	}
 	// 发布这条交易的进度键
+	var procs entities.DatabaseProcess
+	if procs, err = d.queryProcess(key); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "获取进度失败：%v", err)
+	}
 	if utils.GetConfig().GetSubsSettings().Callbacks.Redis.Active {
-		var procs entities.DatabaseProcess
-		if procs, err = d.queryProcess(key); err != nil {
-			return 0, utils.LogMsgEx(utils.ERROR, "获取进度失败：%v", err)
-		}
 		var strProcs []byte
 		if strProcs, err = json.Marshal(procs); err != nil {
 			return 0, utils.LogIdxEx(utils.ERROR, 22, err)
@@ -155,6 +157,46 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 		pocsPubKey := utils.GetConfig().GetSubsSettings().Redis.ProcessPubKey
 		if _, err = cli.Publish(pocsPubKey, strProcs).Result(); err != nil {
 			return 0, utils.LogMsgEx(utils.ERROR, "发布进度错误：%v", err)
+		}
+	}
+	if utils.GetConfig().GetSubsSettings().Callbacks.RPC.Active {
+		rpcSet := utils.GetConfig().GetSubsSettings().Callbacks.RPC
+		url := ""
+		switch procs.Type {
+		case entities.DEPOSIT:
+			url = rpcSet.DepositURL
+		case entities.WITHDRAW:
+			url = rpcSet.WithdrawURL
+		case entities.COLLECT:
+			url = rpcSet.CollectURL
+		}
+		if url == "" {
+			return 1, nil
+		}
+		strAry := strings.Split(url, " ")
+		method := http.MethodPost
+		switch len(strAry) {
+		case 1:
+			// 默认采用POST格式发送回调
+		case 2:
+			method = strAry[0]
+			url = strAry[1]
+		default:
+			panic(utils.LogIdxEx(utils.ERROR, 44))
+		}
+
+		var strProcs []byte
+		if strProcs, err = json.Marshal(procs); err != nil {
+			return 0, utils.LogIdxEx(utils.ERROR, 22, err)
+		}
+		var req *http.Request
+		if req, err = http.NewRequest(method, url, bytes.NewBuffer(strProcs)); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "构建请求失败：%v", err)
+		}
+		req.Header.Add("Content-Type", "application/json")
+		client := &http.Client {}
+		if _, err := client.Do(req); err != nil {
+			return 0, utils.LogMsgEx(utils.ERROR, "发送回调请求：%v", err)
 		}
 	}
 	return 1, nil

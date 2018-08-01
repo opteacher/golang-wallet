@@ -52,6 +52,7 @@ type subsSetting struct {
 			Active bool	`json:"active"`
 			DepositURL string	`json:"deposit_url"`
 			WithdrawURL string	`json:"withdraw_url"`
+			CollectURL string	`json:"collect_url"`
 		}				`json:"rpc"`
 		MQ struct {
 			Active bool	`json:"active"`
