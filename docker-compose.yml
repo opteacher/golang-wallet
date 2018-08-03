@@ -1,11 +1,32 @@
 version: '3'
 services:
-  wallet-service:
-    build: .
+  database:
+    image: mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=12345
     volumes:
-      - ~/.ssh:/home/opower/.ssh
+      - sql/database.sql:/mysql/wallet.sql
+    exec:
+      - "mysql < /mysql/wallet.sql"
     ports:
       - "127.0.0.1:3306:3306"
+
+  redis:
+    image: redis
+    environment:
+      - REDIS_AUTH=abcd
+    ports:
       - "127.0.0.1:6379:6379"
-      - "127.0.0.1:5672:5672"
+    exec:
+      - "redis-server --requirepass '$REDIS_AUTH' --protected-mode yes"
+
+  wallet-service:
+    build: .
+    depends_on:
+      - database
+      - redis
+    volumes:
+      - ~/.ssh:/home/opower/.ssh/id_rsa
+    ports:
       - "8037:8037"

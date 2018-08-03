@@ -1,6 +1,3 @@
-FROM mysql
-FROM redis
-FROM rabbitmq
 FROM golang
 
 WORKDIR /app
@@ -12,14 +9,8 @@ RUN go get -u github.com/go-sql-driver/mysql \
 
 RUN useradd -r -g adm opower
 USER opower
-VOLUME /home/opower/.ssh
+VOLUME /home/opower/.ssh/id_rsa
 
-# database
-EXPOSE 3306
-# redis
-EXPOSE 6379
-# rabbitmq
-EXPOSE 5672
 # wallet
 EXPOSE 8037
 CMD ["go", "run", "wallet.go"]
