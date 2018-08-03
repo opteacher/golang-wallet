@@ -10,7 +10,7 @@ services:
       - ./sql/database.sql:/mysql/wallet.sql
     ports:
       - "127.0.0.1:3306:3306"
-#    command: mysql -u root -p "$$MYSQL_ROOT_PASSWORD" < /mysql/wallet.sql
+    command: mysql -u root -p "$$MYSQL_ROOT_PASSWORD" < /mysql/wallet.sql
 
   redis:
     image: redis
@@ -18,7 +18,7 @@ services:
       - REDIS_AUTH=abcd
     ports:
       - "127.0.0.1:6379:6379"
-    command: redis-server --requirepass "$$REDIS_AUTH" --protected-mode yes
+    command: redis-server --protected-mode yes --requirepass "$$REDIS_AUTH"
 
   wallet-service:
     build: .
