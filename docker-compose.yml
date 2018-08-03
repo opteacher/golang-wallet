@@ -2,6 +2,7 @@ version: '3'
 services:
   database:
     image: mysql
+    restart: unless-stopped
     environment:
       - MYSQL_ROOT_PASSWORD=12345
     volumes:
@@ -9,7 +10,7 @@ services:
       - ./sql/database.sql:/mysql/wallet.sql
     ports:
       - "127.0.0.1:3306:3306"
-    command: mysql -u root -p "$$MYSQL_ROOT_PASSWORD" < /mysql/wallet.sql
+    command: -u root -p "$$MYSQL_ROOT_PASSWORD" < /mysql/wallet.sql
 
   redis:
     image: redis
