@@ -17,7 +17,7 @@ services:
       - REDIS_AUTH=abcd
     ports:
       - "127.0.0.1:6379:6379"
-    command: redis-server --requirepass '$REDIS_AUTH' --protected-mode yes
+    command: redis-server --requirepass "$$REDIS_AUTH" --protected-mode yes
 
   wallet-service:
     build: .
