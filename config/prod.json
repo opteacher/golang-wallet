@@ -7,7 +7,7 @@
 		"max_conn": 20
 	},
 	"redis": {
-		"password": "",
+		"password": "abcd",
 		"time_format": "RFC3339",
 		"process_pub_key": "wallet transactions process",
 		"clusters": [
