@@ -10,7 +10,7 @@ services:
       - ./sql/database.sql:/mysql/wallet.sql
     ports:
       - "127.0.0.1:3306:3306"
-    command: mysql -u root < /mysql/wallet.sql
+    command: --default-authentication-plugin=mysql_native_password
 
   redis:
     image: redis
