@@ -6,7 +6,7 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=12345
     volumes:
-      - sql/database.sql:/mysql/wallet.sql
+      - ./sql/database.sql:/mysql/wallet.sql
     ports:
       - "127.0.0.1:3306:3306"
     command: mysql < /mysql/wallet.sql
