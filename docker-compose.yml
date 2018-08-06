@@ -23,6 +23,7 @@ services:
     command: --requirepass abcd
 
   eth:
+    container_name: wallet-eth
     build:
       context: .
       args:
@@ -34,6 +35,7 @@ services:
       - "8037:8037"
 
   btc:
+    container_name: wallet-btc
     build:
       context: .
       args:
