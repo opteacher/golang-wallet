@@ -7,12 +7,11 @@ services:
       - MYSQL_ROOT_PASSWORD=12345
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./sql/database.sql:/init-db-sql/wallet.sql
+      - ./sql/database.sql:/docker-entrypoint-initdb.d/wallet.sql
     ports:
       - "127.0.0.1:3306:3306"
     expose:
       - "3306"
-    command: MYSQL_PWD=`$$MYSQL_ROOT_PASSWORD` mysql -u root < wallet.sql
 
   redis:
     image: redis
@@ -20,6 +19,8 @@ services:
       - REDIS_AUTH=abcd
     ports:
       - "127.0.0.1:6379:6379"
+    expose:
+      - "6379"
     command: redis-server --protected-mode yes --requirepass "$$REDIS_AUTH"
 
   wallet-service:
