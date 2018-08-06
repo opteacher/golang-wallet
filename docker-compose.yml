@@ -7,10 +7,12 @@ services:
       - MYSQL_ROOT_PASSWORD=12345
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./sql/database.sql:/mysql/wallet.sql
+      - ./sql/database.sql:/init-db-sql/wallet.sql
     ports:
       - "127.0.0.1:3306:3306"
-    command: --default-authentication-plugin=mysql_native_password
+    expose:
+      - "3306"
+    command: MYSQL_PWD=`$$MYSQL_ROOT_PASSWORD` mysql -u root < wallet.sql
 
   redis:
     image: redis
