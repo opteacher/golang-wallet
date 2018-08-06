@@ -32,3 +32,14 @@ services:
       - redis
     ports:
       - "8037:8037"
+
+  btc:
+    build:
+      context: .
+      args:
+        coin: btc
+    depends_on:
+      - database
+      - redis
+    ports:
+      - "8038:8037"
