@@ -16,13 +16,11 @@ services:
 
   redis:
     image: redis
-    environment:
-      REDIS_AUTH: abcd
     ports:
       - "127.0.0.1:6379:6379"
     expose:
       - "6379"
-    command: --protected-mode yes --requirepass "$$REDIS_AUTH"
+    command: --requirepass abcd
 
   eth:
     build:
