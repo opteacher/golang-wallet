@@ -29,7 +29,5 @@ services:
     depends_on:
       - database
       - redis
-    volumes:
-      - ~/.ssh:/home/root/.ssh/id_rsa
     ports:
       - "8037:8037"
