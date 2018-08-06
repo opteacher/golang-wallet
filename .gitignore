@@ -5,3 +5,4 @@ pkg
 wallet
 logs
 config/dev.json
+config/coin.json

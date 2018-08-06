@@ -24,8 +24,10 @@ services:
       - "6379"
     command: redis-server --protected-mode yes --requirepass "$$REDIS_AUTH"
 
-  wallet-service:
+  eth:
     build: .
+    environment:
+      COIN_NAME: eth
     depends_on:
       - database
       - redis
