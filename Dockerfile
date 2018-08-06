@@ -9,7 +9,7 @@ RUN go get -u github.com/go-sql-driver/mysql \
 
 #RUN useradd -r -g adm opower
 #USER opower
-VOLUME /home/opower/.ssh/id_rsa
+VOLUME /home/root/.ssh/id_rsa
 
 EXPOSE 8037
 CMD ["go", "run", "wallet.go"]

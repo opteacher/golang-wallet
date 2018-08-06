@@ -1,6 +1,6 @@
 {
 	"db": {
-		"url": "127.0.0.1:3306",
+		"url": "database:3306",
 		"name": "test",
 		"username": "root",
 		"password": "12345",
@@ -13,7 +13,7 @@
 		"clusters": [
 			{
 				"name": "main",
-				"url": "127.0.0.1:6379"
+				"url": "redis:6379"
 			}
 		]
 	},

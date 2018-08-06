@@ -30,6 +30,6 @@ services:
       - database
       - redis
     volumes:
-      - ~/.ssh:/home/opower/.ssh/id_rsa
+      - ~/.ssh:/home/root/.ssh/id_rsa
     ports:
       - "8037:8037"
