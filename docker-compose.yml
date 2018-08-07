@@ -7,6 +7,9 @@ services:
       - ./config/wallet.conf:/etc/nginx/conf.d/wallet.conf
     ports:
       - "80:80"
+    depends_on:
+      - eth
+      - btc
     expose:
       - "80"
 
