@@ -1,6 +1,7 @@
 {
 	"name": "BTC",
 	"url": "http://18.144.17.127:8332",
+	"assistSite": "http://18.144.17.127:38332",
 	"decimal": 18,
 	"stable": 12,
 	"rpcUser": "123",

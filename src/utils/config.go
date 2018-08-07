@@ -63,6 +63,7 @@ type subsSetting struct {
 type coinSetting struct {
 	Name string						`json:"name"`
 	Url string						`json:"url"`
+	AssistSite string				`json:"assistSite"`
 	Decimal int						`json:"decimal"`
 	Stable int						`json:"stable"`
 	RPCUser string					`json:"rpcUser"`

@@ -102,7 +102,8 @@ func (rpc *eth) numProp(tx map[string]interface{}, key string) (*big.Float, erro
 	}
 	return numTmp, nil
 }
-func (rpc *eth) sendRequest(method string, params []interface {}, id string) (EthSucceedResp, error)  {
+func (rpc *eth) sendRequest(method string, params []interface {}) (EthSucceedResp, error)  {
+	id := fmt.Sprintf("%d", rand.Intn(1000))
 	reqBody := RequestBody { method, params, id }
 	reqStr, err := json.Marshal(reqBody)
 	if err != nil {
@@ -142,9 +143,8 @@ func (rpc *eth) GetTransactions(height uint) ([]entities.Transaction, error) {
 	// 发送请求获取指定高度的块
 	var resp EthSucceedResp
 	rand.Seed(time.Now().Unix())
-	id := fmt.Sprintf("%d", rand.Intn(1000))
 	params := []interface{} { "0x" + strconv.FormatUint(uint64(height), 16), true }
-	if resp, err = rpc.sendRequest("eth_getBlockByNumber", params, id); err != nil {
+	if resp, err = rpc.sendRequest("eth_getBlockByNumber", params); err != nil {
 		return nil, utils.LogIdxEx(utils.ERROR, 26, err)
 	}
 
@@ -202,8 +202,7 @@ func (rpc *eth) GetCurrentHeight() (uint64, error) {
 	var err error
 	var resp EthSucceedResp
 	rand.Seed(time.Now().Unix())
-	id := fmt.Sprintf("%d", rand.Intn(1000))
-	if resp, err = rpc.sendRequest("eth_blockNumber", []interface{} {}, id); err != nil {
+	if resp, err = rpc.sendRequest("eth_blockNumber", []interface{} {}); err != nil {
 		return 0, utils.LogIdxEx(utils.ERROR, 26, err)
 	}
 	strHeight := resp.Result.(string)
@@ -255,20 +254,18 @@ func (rpc *eth) SendTransaction(from string, to string, amount float64, password
 	paramEstimateGas.From = from
 	paramEstimateGas.To = to
 	paramEstimateGas.Value = cvtAmount
-	id := fmt.Sprintf("%d", rand.Intn(1000))
 	var resp EthSucceedResp
 	if resp, err = rpc.sendRequest("eth_estimateGas", []interface {} {
 		paramEstimateGas,
-	}, id); err != nil {
+	}); err != nil {
 		return "", utils.LogIdxEx(utils.ERROR, 32, err)
 	}
 	gasNum := resp.Result
 
 	// 解锁用户账户
-	id = fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("personal_unlockAccount", []interface {} {
 		from, password, coinSet.UnlockDuration,
-	}, id); err != nil {
+	}); err != nil {
 		return "", utils.LogIdxEx(utils.ERROR, 33, err)
 	}
 
@@ -278,10 +275,9 @@ func (rpc *eth) SendTransaction(from string, to string, amount float64, password
 	paramTransaction.To = to
 	paramTransaction.Value = cvtAmount
 	paramTransaction.Gas = gasNum.(string)
-	id = fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("eth_sendTransaction", []interface {} {
 		paramTransaction,
-	}, id); err != nil {
+	}); err != nil {
 		return "", utils.LogIdxEx(utils.ERROR, 35, err)
 	}
 	if resp.Result == nil {
@@ -301,9 +297,8 @@ func (rpc *eth) SendTo(to string, amount float64) (string, error) {
 func (rpc *eth) GetBalance(address string) (float64, error) {
 	var err error
 	var resp EthSucceedResp
-	id := fmt.Sprintf("%d", rand.Intn(1000))
 	params := []interface {} { address, "latest" }
-	if resp, err = rpc.sendRequest("eth_getBalance", params, id); err != nil {
+	if resp, err = rpc.sendRequest("eth_getBalance", params); err != nil {
 		return -1, utils.LogIdxEx(utils.ERROR, 31, err)
 	}
 	if resp.Result == nil {
@@ -324,9 +319,8 @@ func (rpc *eth) GetBalance(address string) (float64, error) {
 func (rpc *eth) GetNewAddress() (string, error) {
 	var err error
 	var resp EthSucceedResp
-	id := fmt.Sprintf("%d", rand.Intn(1000))
 	params := []interface {} { utils.GetConfig().GetCoinSettings().TradePassword }
-	if resp, err = rpc.sendRequest("personal_newAccount", params, id); err != nil {
+	if resp, err = rpc.sendRequest("personal_newAccount", params); err != nil {
 		return "", utils.LogIdxEx(utils.ERROR, 36, err)
 	}
 	return resp.Result.(string), nil
@@ -342,10 +336,9 @@ func (rpc *eth) GetTransaction(txHash string) ([]entities.Transaction, error) {
 	var err error
 	var resp EthSucceedResp
 	var tx entities.Transaction
-	id := fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("eth_getTransactionByHash", []interface {} {
 		txHash,
-	}, id); err != nil {
+	}); err != nil {
 		return []entities.Transaction {}, utils.LogIdxEx(utils.ERROR, 37, err)
 	}
 	result := resp.Result.(map[string]interface {})
@@ -376,10 +369,9 @@ func (rpc *eth) GetTransaction(txHash string) ([]entities.Transaction, error) {
 func (rpc *eth) GetTxExistsHeight(txHash string) (uint64, error) {
 	var err error
 	var resp EthSucceedResp
-	id := fmt.Sprintf("%d", rand.Intn(1000))
 	if resp, err = rpc.sendRequest("eth_getTransactionByHash", []interface {} {
 		txHash,
-	}, id); err != nil {
+	}); err != nil {
 		return 0, utils.LogIdxEx(utils.ERROR, 37, err)
 	}
 	result := resp.Result.(map[string]interface {})
@@ -392,4 +384,14 @@ func (rpc *eth) GetTxExistsHeight(txHash string) (uint64, error) {
 		height, _ = numTmp.Uint64()
 		return height, nil
 	}
+}
+func (rpc *eth) EnableMining(enable bool, speed int) (bool, error)  {
+	method := "miner_start"
+	if enable {
+		method = "miner_stop"
+	}
+	if _, err := rpc.sendRequest(method, []interface {} { speed }); err != nil {
+		return false, utils.LogMsgEx(utils.ERROR, "调整挖矿状态失败：%v", err)
+	}
+	return true, nil
 }

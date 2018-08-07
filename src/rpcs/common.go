@@ -17,6 +17,7 @@ type Rpc interface {
 	ValidAddress(address string) (bool, error)
 	GetTransaction(txHash string) ([]entities.Transaction, error)
 	GetTxExistsHeight(txHash string) (uint64, error)
+	EnableMining(enable bool, speed int) (bool, error)
 }
 
 type rpc struct {

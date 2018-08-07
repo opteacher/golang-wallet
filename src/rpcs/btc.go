@@ -18,6 +18,7 @@ type btc struct {
 	sync.Once
 	coinName string
 	callUrl string
+	assSite string
 	decimal int
 	Stable int
 	rpcUser string
@@ -42,6 +43,7 @@ func (rpc *btc) create() {
 	setting := utils.GetConfig().GetCoinSettings()
 	rpc.coinName 	= setting.Name
 	rpc.callUrl		= setting.Url
+	rpc.assSite		= setting.AssistSite
 	rpc.decimal		= setting.Decimal
 	rpc.Stable		= setting.Stable
 	rpc.rpcUser		= setting.RPCUser
@@ -255,4 +257,7 @@ func (rpc *btc) GetTxExistsHeight(txHash string) (uint64, error) {
 	}
 	tmp, _ := result.Get("blockindex")
 	return uint64(tmp.(float64)) + 1, nil
+}
+func (rpc *btc) EnableMining(enable bool, speed int) (bool, error) {
+	return true, nil
 }
