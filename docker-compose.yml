@@ -48,6 +48,8 @@ services:
     depends_on:
       - database
       - redis
+    ports:
+      - "127.0.0.1:8037:8037"
 
   btc:
     container_name: wallet-btc
@@ -59,3 +61,5 @@ services:
     depends_on:
       - database
       - redis
+    ports:
+      - "127.0.0.1:8038:8038"
