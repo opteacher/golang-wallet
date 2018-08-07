@@ -2,10 +2,15 @@ version: '3'
 services:
   nginx:
     image: nginx
+    volumes:
+      - ./config/wallet.conf:/etc/nginx/conf.d/wallet.conf
+    ports:
+      - "80:80"
     expose:
-      - "8080"
+      - "80"
 
   database:
+    container_name: wallet-mysql
     image: mysql
     restart: unless-stopped
     environment:
@@ -20,6 +25,7 @@ services:
     command: --default-authentication-plugin=mysql_native_password
 
   redis:
+    container_name: wallet-redis
     image: redis
     restart: unless-stopped
     ports:
@@ -39,7 +45,7 @@ services:
       - database
       - redis
     ports:
-      - "8037:8037"
+      - "127.0.0.1:8037:8037"
 
   btc:
     container_name: wallet-btc
@@ -52,4 +58,4 @@ services:
       - database
       - redis
     ports:
-      - "8038:8038"
+      - "127.0.0.1:8038:8038"
