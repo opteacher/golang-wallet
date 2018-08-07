@@ -1,6 +1,7 @@
 version: '3'
 services:
   nginx:
+    container_name: wallet-nginx
     image: nginx
     volumes:
       - ./config/wallet.conf:/etc/nginx/conf.d/wallet.conf
