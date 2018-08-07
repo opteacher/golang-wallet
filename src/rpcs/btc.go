@@ -50,7 +50,7 @@ func (rpc *btc) create() {
 }
 
 type BtcResp struct {
-	Error string		`json:"error"`
+	Error interface {}	`json:"error"`
 	Id string			`json:"id"`
 	Result interface{}	`json:"result"`
 }
@@ -90,6 +90,10 @@ func (rpc *btc) sendRequest(method string, params []interface {}) (BtcResp, erro
 	}
 	if resBody.Result == nil {
 		err = utils.LogIdxEx(utils.DEBUG, 40, nil)
+	}
+	if resBody.Error != nil {
+		tmp := resBody.Error.(map[string]interface {})
+		err = utils.LogIdxEx(utils.ERROR, 26, tmp["message"])
 	}
 	return resBody, err
 }

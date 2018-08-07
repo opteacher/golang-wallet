@@ -38,7 +38,7 @@ services:
       - "6379"
     command: --requirepass abcd
 
-  eth:
+  wallet-eth:
     container_name: wallet-eth
     build:
       context: .
@@ -49,7 +49,7 @@ services:
       - database
       - redis
 
-  btc:
+  wallet-btc:
     container_name: wallet-btc
     build:
       context: .
