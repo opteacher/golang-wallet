@@ -1,5 +1,9 @@
 version: '3'
 services:
+  nginx:
+    image: nginx
+    expose: 8080
+
   database:
     image: mysql
     restart: unless-stopped
@@ -16,6 +20,7 @@ services:
 
   redis:
     image: redis
+    restart: unless-stopped
     ports:
       - "127.0.0.1:6379:6379"
     expose:
