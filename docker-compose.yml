@@ -2,7 +2,8 @@ version: '3'
 services:
   nginx:
     image: nginx
-    expose: 8080
+    expose:
+      - "8080"
 
   database:
     image: mysql
