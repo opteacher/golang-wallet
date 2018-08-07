@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 )
 
 func initServices(svcs []*services.BaseService) {
@@ -100,12 +101,12 @@ func main() {
 	switch {
 	case sbSet.APIs.RPC.Active:
 		go func() {
-			utils.LogMsgEx(utils.INFO, "HTTP服务器监听于：%d", sbSet.APIs.RPC.Port)
-			http.HandleFunc("/", apis.HttpHandler)
-			port := 8037
-			if sbSet.APIs.RPC.Port != 0 {
-				port = sbSet.APIs.RPC.Port
+			port := sbSet.APIs.Socket.Port
+			if port == 0 {
+				port, _ = strconv.Atoi(os.Getenv("PORT"))
 			}
+			utils.LogMsgEx(utils.INFO, "HTTP服务器监听于：%d", port)
+			http.HandleFunc("/", apis.HttpHandler)
 			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 			utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)

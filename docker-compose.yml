@@ -28,6 +28,7 @@ services:
       context: .
       args:
         coin: eth
+        port: 8037
     depends_on:
       - database
       - redis
@@ -40,8 +41,9 @@ services:
       context: .
       args:
         coin: btc
+        port: 8038
     depends_on:
       - database
       - redis
     ports:
-      - "8038:8037"
+      - "8038:8038"
