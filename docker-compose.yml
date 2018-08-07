@@ -8,8 +8,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - eth
-      - btc
+      - wallet-eth
+      - wallet-btc
     expose:
       - "80"
 
