@@ -1,7 +1,7 @@
 version: '3'
 services:
   nginx:
-    container_name: wallet-nginx
+    container_name: nginx
     image: nginx
     volumes:
       - ./config/wallet.conf:/etc/nginx/conf.d/default.conf
@@ -14,7 +14,7 @@ services:
       - "80"
 
   database:
-    container_name: wallet-mysql
+    container_name: mysql
     image: mysql
     restart: unless-stopped
     environment:
@@ -29,7 +29,7 @@ services:
     command: --default-authentication-plugin=mysql_native_password
 
   redis:
-    container_name: wallet-redis
+    container_name: redis
     image: redis
     restart: unless-stopped
     ports:
