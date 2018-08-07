@@ -4,7 +4,7 @@ services:
     container_name: wallet-nginx
     image: nginx
     volumes:
-      - ./config/wallet.conf:/etc/nginx/conf.d/wallet.conf
+      - ./config/wallet.conf:/etc/nginx/conf.d/default.conf
     ports:
       - "80:80"
     depends_on:
