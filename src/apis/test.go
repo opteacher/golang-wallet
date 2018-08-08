@@ -10,10 +10,10 @@ import (
 	"regexp"
 )
 
-const transferPath		= "^/api/transfer/([A-Z]{3,})$"
-const minerPath			= "^/api/miner/([A-Z]{3,})$"
+const transferPath		= "^/api/test/transfer/([A-Z]{3,})$"
+const minerPath			= "^/api/test/mining/([A-Z]{3,})$"
 
-var txRouteMap = map[string]interface {} {
+var tstRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodPost, transferPath):	transfer,
 	fmt.Sprintf("%s %s", http.MethodPut, minerPath):		doMining,
 }

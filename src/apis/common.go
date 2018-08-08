@@ -17,8 +17,8 @@ const DepositPath = "/api/deposit"
 const DpLen = len(DepositPath)
 const ProcessPath = "/api/process"
 const PcsLen = len(ProcessPath)
-const TransferPath = "/api/transfer"
-const TxLen = len(TransferPath)
+const TestPath = "/api/test"
+const TstLen = len(TestPath)
 
 type RespVO struct {
 	Code int			`json:"code"`
@@ -79,8 +79,8 @@ func HttpHandler(w http.ResponseWriter, req *http.Request) {
 		subHandler(w, req, wdRouteMap)
 	case len(req.RequestURI) >= DpLen && req.RequestURI[:DpLen] == DepositPath:
 		subHandler(w, req, dpRouteMap)
-	case len(req.RequestURI) >= TxLen && req.RequestURI[:TxLen] == TransferPath:
-		subHandler(w, req, txRouteMap)
+	case len(req.RequestURI) >= TstLen && req.RequestURI[:TstLen] == TestPath:
+		subHandler(w, req, tstRouteMap)
 	case len(req.RequestURI) >= PcsLen && req.RequestURI[:PcsLen] == ProcessPath:
 		subHandler(w, req, pcsRouteMap)
 	default:
