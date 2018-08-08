@@ -390,7 +390,7 @@ func (rpc *eth) GetTxExistsHeight(txHash string) (uint64, error) {
 func (rpc *eth) EnableMining(enable bool, speed int) (bool, error)  {
 	rpc.isMining = enable
 	method := "miner_start"
-	if rpc.isMining {
+	if !rpc.isMining {
 		method = "miner_stop"
 	}
 	if _, err := rpc.sendRequest(method, []interface {} { speed }); err != nil {
