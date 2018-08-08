@@ -4,7 +4,6 @@ import (
 	"utils"
 	"services"
 	"unsafe"
-	"net/http"
 	"apis"
 	"log"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"net/http"
 )
 
 func initServices(svcs []*services.BaseService) {
@@ -98,8 +98,7 @@ func main() {
 	runServices()
 
 	// API的初始化和监听
-	switch {
-	case sbSet.APIs.RPC.Active:
+	if sbSet.APIs.RPC.Active {
 		go func() {
 			port := 0
 			strPort := os.Getenv("PORT")
@@ -115,8 +114,8 @@ func main() {
 			utils.LogMsgEx(utils.WARNING, "正在安全退出", nil)
 			stopServices()
 		}()
-	fallthrough
-	case sbSet.APIs.Socket.Active:
+	}
+	if sbSet.APIs.Socket.Active {
 		go func() {
 			utils.LogMsgEx(utils.INFO, "SOCKET服务器监听于：%d", sbSet.APIs.Socket.Port)
 			url := fmt.Sprintf("localhost:%d", sbSet.APIs.Socket.Port)
