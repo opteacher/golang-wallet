@@ -12,5 +12,5 @@ RUN cp config/$coin.json config/coin.json \
  && go get -u github.com/stretchr/testify \
  && go get -u github.com/go-redis/redis
 
-EXPOSE 8037
+EXPOSE $port
 CMD ["go", "run", "wallet.go"]
