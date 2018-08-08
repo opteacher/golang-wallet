@@ -12,10 +12,11 @@ import (
 
 const transferPath		= "^/api/test/([A-Z]{3,})/transfer$"
 const miningPath		= "^/api/test/([A-Z]{3,})/mining$"
-
+	
 var tstRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodPost, transferPath):	transfer,
 	fmt.Sprintf("%s %s", http.MethodPut, miningPath):		doMining,
+	fmt.Sprintf("%s %s", http.MethodGet, miningPath):		isMining,
 }
 
 type transactionReq struct {
@@ -128,6 +129,14 @@ func doMining(w http.ResponseWriter, req *http.Request) []byte {
 		return []byte(ret)
 	}
 	resp.Code = 200
+	ret, _ := json.Marshal(resp)
+	return []byte(ret)
+}
+
+func isMining(w http.ResponseWriter, req *http.Request) []byte {
+	var resp RespVO
+	resp.Code = 200
+	resp.Data = rpcs.GetRPC(utils.GetConfig().GetCoinSettings().Name).IsMining()
 	ret, _ := json.Marshal(resp)
 	return []byte(ret)
 }

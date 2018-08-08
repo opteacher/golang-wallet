@@ -18,6 +18,7 @@ type Rpc interface {
 	GetTransaction(txHash string) ([]entities.Transaction, error)
 	GetTxExistsHeight(txHash string) (uint64, error)
 	EnableMining(enable bool, speed int) (bool, error)
+	IsMining() bool
 }
 
 type rpc struct {

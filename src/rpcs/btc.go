@@ -274,3 +274,6 @@ func (rpc *btc) EnableMining(enable bool, speed int) (bool, error) {
 	rpc.isMining = enable
 	return true, nil
 }
+func (rpc *btc) IsMining() bool {
+	return rpc.isMining
+}
