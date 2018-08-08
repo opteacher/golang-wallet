@@ -390,7 +390,7 @@ func (rpc *eth) EnableMining(enable bool, speed int) (bool, error)  {
 	if enable {
 		method = "miner_stop"
 	}
-	if _, err := rpc.sendRequest(method, []interface {} { speed }); err != nil {
+		if _, err := rpc.sendRequest(method, []interface {} { speed }); err != nil {
 		return false, utils.LogMsgEx(utils.ERROR, "调整挖矿状态失败：%v", err)
 	}
 	return true, nil

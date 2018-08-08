@@ -11,11 +11,11 @@ import (
 )
 
 const transferPath		= "^/api/test/transfer/([A-Z]{3,})$"
-const minerPath			= "^/api/test/mining/([A-Z]{3,})$"
+const miningPath		= "^/api/test/mining/([A-Z]{3,})$"
 
 var tstRouteMap = map[string]interface {} {
 	fmt.Sprintf("%s %s", http.MethodPost, transferPath):	transfer,
-	fmt.Sprintf("%s %s", http.MethodPut, minerPath):		doMining,
+	fmt.Sprintf("%s %s", http.MethodPut, miningPath):		doMining,
 }
 
 type transactionReq struct {
@@ -75,9 +75,14 @@ func transfer(w http.ResponseWriter, req *http.Request) []byte {
 	return []byte(ret)
 }
 
+type miningReq struct {
+	Enable bool	`json:"enable"`
+	Speed int	`json:"speed"`
+}
+
 func doMining(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
-	re := regexp.MustCompile(transferPath)
+	re := regexp.MustCompile(miningPath)
 	params := re.FindStringSubmatch(req.RequestURI)[1:]
 	if len(params) == 0 {
 		resp.Code = 500
@@ -97,8 +102,8 @@ func doMining(w http.ResponseWriter, req *http.Request) []byte {
 	}
 	defer req.Body.Close()
 
-	reqBody := make(map[string]interface {})
-	if err = json.Unmarshal(body, reqBody); err != nil {
+	var mining miningReq
+	if err = json.Unmarshal(body, &mining); err != nil {
 		utils.LogIdxEx(utils.WARNING, 38, err)
 		resp.Code = 500
 		resp.Msg = err.Error()
@@ -106,23 +111,21 @@ func doMining(w http.ResponseWriter, req *http.Request) []byte {
 		return ret
 	}
 	miningSpeed := 1
-	if oMiningSpeed, ok := reqBody["speed"]; ok {
-		miningSpeed = int(oMiningSpeed.(int64))
+	if mining.Speed > 1 {
+		miningSpeed = mining.Speed
 	}
 	rpc := rpcs.GetRPC(params[0])
-	if oEnable, ok := reqBody["enable"]; ok {
-		if res, err := rpc.EnableMining(oEnable.(bool), miningSpeed); err != nil {
-			utils.LogMsgEx(utils.WARNING, "调整挖矿状态失败：%v", err)
-			resp.Code = 500
-			resp.Msg = err.Error()
-			ret, _ := json.Marshal(resp)
-			return ret
-		} else {
-			resp.Code = 200
-			resp.Data = res
-			ret, _ := json.Marshal(resp)
-			return []byte(ret)
-		}
+	if res, err := rpc.EnableMining(mining.Enable, miningSpeed); err != nil {
+		utils.LogMsgEx(utils.WARNING, "调整挖矿状态失败：%v", err)
+		resp.Code = 500
+		resp.Msg = err.Error()
+		ret, _ := json.Marshal(resp)
+		return ret
+	} else {
+		resp.Code = 200
+		resp.Data = res
+		ret, _ := json.Marshal(resp)
+		return []byte(ret)
 	}
 	resp.Code = 200
 	ret, _ := json.Marshal(resp)

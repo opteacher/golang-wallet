@@ -32,6 +32,9 @@ type api struct {
 }
 
 func subHandler(w http.ResponseWriter, req *http.Request, routeMap map[string]interface {}) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT ,DELETE")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	uri := strings.Split(req.RequestURI, "?")

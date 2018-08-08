@@ -261,11 +261,11 @@ func (rpc *btc) GetTxExistsHeight(txHash string) (uint64, error) {
 	return uint64(tmp.(float64)) + 1, nil
 }
 func (rpc *btc) EnableMining(enable bool, speed int) (bool, error) {
-	colAddr := utils.GetConfig().GetCoinSettings().Collect
+	//colAddr := utils.GetConfig().GetCoinSettings().Collect
 	if enable && !rpc.isMining {
 		go func() {
 			for rpc.isMining {
-				rpc.sendRequest("generatetoaddress", []interface {} { speed, colAddr })
+				rpc.sendRequest("generate", []interface {} { speed })
 
 				time.Sleep(1 * time.Second)
 			}
