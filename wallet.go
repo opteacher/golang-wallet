@@ -101,9 +101,12 @@ func main() {
 	switch {
 	case sbSet.APIs.RPC.Active:
 		go func() {
-			port := sbSet.APIs.Socket.Port
-			if port == 0 {
+			port := 0
+			strPort := os.Getenv("PORT")
+			if len(strPort) != 0 {
 				port, _ = strconv.Atoi(os.Getenv("PORT"))
+			} else {
+				port = sbSet.APIs.Socket.Port
 			}
 			utils.LogMsgEx(utils.INFO, "HTTP服务器监听于：%d", port)
 			http.HandleFunc("/", apis.HttpHandler)
