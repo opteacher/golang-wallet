@@ -105,7 +105,7 @@ func doMining(w http.ResponseWriter, req *http.Request) []byte {
 		ret, _ := json.Marshal(resp)
 		return ret
 	}
-	var miningSpeed int = 1
+	miningSpeed := 1
 	if oMiningSpeed, ok := reqBody["speed"]; ok {
 		miningSpeed = int(oMiningSpeed.(int64))
 	}

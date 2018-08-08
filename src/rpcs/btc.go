@@ -24,6 +24,7 @@ type btc struct {
 	rpcUser string
 	rpcPassword string
 	account string
+	isMining bool
 }
 
 var __btc *btc
@@ -49,6 +50,7 @@ func (rpc *btc) create() {
 	rpc.rpcUser		= setting.RPCUser
 	rpc.rpcPassword	= setting.RPCPassword
 	rpc.account		= setting.Deposit
+	rpc.isMining	= false
 }
 
 type BtcResp struct {
@@ -259,5 +261,16 @@ func (rpc *btc) GetTxExistsHeight(txHash string) (uint64, error) {
 	return uint64(tmp.(float64)) + 1, nil
 }
 func (rpc *btc) EnableMining(enable bool, speed int) (bool, error) {
+	colAddr := utils.GetConfig().GetCoinSettings().Collect
+	if enable && !rpc.isMining {
+		go func() {
+			for rpc.isMining {
+				rpc.sendRequest("generatetoaddress", []interface {} { speed, colAddr })
+
+				time.Sleep(1 * time.Second)
+			}
+		}()
+	}
+	rpc.isMining = enable
 	return true, nil
 }
