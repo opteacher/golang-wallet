@@ -6,7 +6,6 @@ import (
 	"entities"
 	"dao"
 	"rpcs"
-	"errors"
 	"time"
 )
 
@@ -20,6 +19,7 @@ type withdrawService struct {
 	BaseService
 	sync.Once
 	wdsToSend []entities.BaseWithdraw
+	sendDelayList map[int]int
 	wdsToSendLock *sync.RWMutex
 	wdsToInchain map[string]uint
 	wdsToInchainLock *sync.RWMutex
@@ -44,6 +44,7 @@ func (service *withdrawService) create() error {
 	service.wdsToInchain = make(map[string]uint)
 	service.wdsToSendLock = new(sync.RWMutex)
 	service.wdsToInchainLock = new(sync.RWMutex)
+	service.sendDelayList = make(map[int]int)
 	return service.BaseService.create()
 }
 
@@ -73,6 +74,28 @@ func (service *withdrawService) AfterTurn(s *utils.Status, srcStt int) {
 		// 启动子协程等待请求交易入链
 		go service.waitForInchain()
 		utils.LogMsgEx(utils.INFO, "started", nil)
+	}
+}
+
+func (service *withdrawService) RemoveWithdraw(asset string, id int) {
+	for i, wd := range service.wdsToSend {
+		if wd.Id == id && wd.Asset == asset {
+			service.wdsToSendLock.Lock()
+			service.wdsToSend = append(service.wdsToSend[:i], service.wdsToSend[i + 1:]...)
+			service.wdsToSendLock.Unlock()
+			return
+		}
+	}
+	for txid := range service.wdsToInchain {
+		if i, err := dao.GetWithdrawDAO().GetWithdrawId(asset, txid); err != nil {
+			utils.LogMsgEx(utils.ERROR, "未找到交易id为：%s的操作，错误为：%v", txid, err)
+			continue
+		} else if i == id {
+			service.wdsToInchainLock.Lock()
+			delete(service.wdsToInchain, txid)
+			service.wdsToInchainLock.Unlock()
+			return
+		}
 	}
 }
 
@@ -143,6 +166,16 @@ func (service *withdrawService) sendTransactions() {
 	for err == nil && service.status.Current() == START {
 		service.wdsToSendLock.RLock()
 		for i, withdraw := range service.wdsToSend {
+			// 判断是否是发送延迟提币
+			if n, ok := service.sendDelayList[withdraw.Id]; ok {
+				if n > 0 {
+					service.sendDelayList[withdraw.Id] = n - 1
+					continue
+				} else {
+					delete(service.sendDelayList, withdraw.Id)
+				}
+			}
+
 			// 发送提币转账请求
 			var txHash string
 			if txHash, err = rpc.SendTo(withdraw.Address, withdraw.Amount); err != nil {
@@ -152,13 +185,13 @@ func (service *withdrawService) sendTransactions() {
 			}
 			if txHash == "" {
 				utils.LogMsgEx(utils.ERROR, "空的交易ID", nil)
-				err = errors.New("empty tx hash")
+				service.sendDelayList[withdraw.Id] = 100000
 				continue
 			}
 			utils.LogMsgEx(utils.INFO, "提币请求已发送，收到交易ID：%s", txHash)
 
 			// 持久化到数据库
-			if _, err = dao.GetWithdrawDAO().SentForTxHash(txHash, withdraw.Id); err != nil {
+			if _, err = dao.GetWithdrawDAO().SentForTxHash(asset, txHash, withdraw.Id); err != nil {
 				utils.LogMsgEx(utils.ERROR, "持久化到数据库失败：%v", err)
 				continue
 			}
@@ -223,13 +256,13 @@ func (service *withdrawService) waitForInchain() {
 				continue
 			}
 			for _, wd := range txs {
-				if _, err = dao.GetWithdrawDAO().WithdrawIntoChain(txHash, height, wd.TxIndex); err != nil {
+				if _, err = dao.GetWithdrawDAO().WithdrawIntoChain(asset, txHash, height, wd.TxIndex); err != nil {
 					utils.LogMsgEx(utils.ERROR, "持久化到数据库失败：%v", err)
 					continue
 				}
 
 				var id int
-				if id, err = dao.GetWithdrawDAO().GetWithdrawId(txHash); err != nil {
+				if id, err = dao.GetWithdrawDAO().GetWithdrawId(asset, txHash); err != nil {
 					utils.LogMsgEx(utils.ERROR, "获取提币交易id失败：%v", err)
 					continue
 				}

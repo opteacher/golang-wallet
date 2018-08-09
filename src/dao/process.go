@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"bytes"
+	"strconv"
 )
 
 var _timeFormat = map[string]string {
@@ -112,10 +113,8 @@ func (d *processDao) SaveProcess(process *entities.DatabaseProcess) (int64, erro
 			return 0, utils.LogMsgEx(utils.ERROR, "设置process失败：%v", err)
 		}
 	}
-	if !process.Cancelable {
-		if err = cli.HSet(key, "cancelable", 0).Err(); err != nil {
-			return 0, utils.LogMsgEx(utils.ERROR, "设置cancelable失败：%v", err)
-		}
+	if err = cli.HSet(key, "cancelable", process.Cancelable).Err(); err != nil {
+		return 0, utils.LogMsgEx(utils.ERROR, "设置cancelable失败：%v", err)
 	}
 	if process.Height != 0 {
 		if err = cli.HSet(key, "height", process.Height).Err(); err != nil {
@@ -227,7 +226,7 @@ func (d *processDao) queryProcess(key string) (entities.DatabaseProcess, error) 
 	ret.Process, err		= cli.HGet(key, "process").Result()
 	var strCancelable string
 	strCancelable, err		= cli.HGet(key, "cancelable").Result()
-	ret.Cancelable			= strCancelable == "true"
+	ret.Cancelable			= strCancelable != "0" && strCancelable != "false"
 	ret.Height, err			= cli.HGet(key, "height").Uint64()
 	ret.CurrentHeight, err	= cli.HGet(key, "current_height").Uint64()
 	ret.CompleteHeight, err	= cli.HGet(key, "complete_height").Uint64()
@@ -274,4 +273,37 @@ func (d *processDao) UpdateHeight(asset string, curHeight uint64) (int64, error)
 		}
 	}
 	return int64(numKeys), nil
+}
+
+func (d *processDao) DeleteById(asset string, typ string, id int) (int64, error) {
+	key := fmt.Sprintf("process_%s_%s_%d", asset, typ, id)
+
+	var cli redis.Cmdable
+	var err error
+	if cli, err = databases.ConnectRedis(); err != nil {
+		return 0, utils.LogIdxEx(utils.ERROR, 42, err)
+	}
+
+	if cli.Exists(key).Val() == 1 {
+		return cli.Del(key).Result()
+	} else {
+		if keys, err := cli.Keys("process_*").Result(); err != nil {
+			return -1, utils.LogMsgEx(utils.ERROR, "获取所有进度键值失败：%v", err)
+		} else {
+			for _, k := range keys {
+				strId := cli.HGet(k, "id").Val()
+				if len(strId) == 0 {
+					continue
+				}
+				if i, err := strconv.Atoi(strId); err != nil {
+					utils.LogMsgEx(utils.ERROR, "存储的进度ID（%s）非数字，解析出错：%v", strId, err)
+					continue
+				} else if i != id {
+					continue
+				}
+				return cli.Del(k).Result()
+			}
+			return 0, nil
+		}
+	}
 }

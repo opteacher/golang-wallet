@@ -105,9 +105,7 @@ func insertTemplate(d *baseDao, sqlName string, props []interface {}) (int64, er
 	return result.RowsAffected()
 }
 
-func saveTemplate(d *baseDao,
-	selSqlName string, istSqlName string, updSqlName string,
-	conds []interface{}, props []interface{}, keys []string) (int64, error) {
+func saveTemplate(d *baseDao, selSqlName string, istSqlName string, updSqlName string, conds []interface{}, props []interface{}, keys []string) (int64, error) {
 
 	var db *sql.DB
 	var err error
@@ -368,4 +366,25 @@ func insertPartsTemplate(d *baseDao, sqlName string, props map[string]interface 
 		panic(utils.LogIdxEx(utils.ERROR, 12, err))
 	}
 	return result.RowsAffected()
+}
+
+func deleteTemplate(d *baseDao, sqlName string, conds []interface {}) (int64, error) {
+	var db *sql.DB
+	var err error
+	if db, err = databases.ConnectMySQL(); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 10, err))
+	}
+	defer db.Close()
+
+	var deleteSQL string
+	var ok bool
+	if deleteSQL, ok = d.sqls[sqlName]; !ok {
+		return 0, utils.LogIdxEx(utils.ERROR, 11, sqlName)
+	}
+
+	if result, err := db.Exec(deleteSQL, conds...); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 21, err))
+	} else {
+		return result.RowsAffected()
+	}
 }

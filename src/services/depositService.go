@@ -131,6 +131,10 @@ func (service *depositService) startScanChain() {
 			if !utils.StrArrayContains(service.addresses, tx.To) {
 				continue
 			}
+			// 如果充值金额为0，跳过
+			if tx.Amount == 0 {
+				continue
+			}
 
 			utils.LogMsgEx(utils.INFO, "发现交易：%v", tx)
 

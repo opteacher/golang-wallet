@@ -109,7 +109,7 @@ func (d *depositDao) GetDepositId(txHash string) (int, error) {
 	return depositId, nil
 }
 
-func (d *depositDao)GetDeposits(conds map[string]interface {}) ([]entities.DatabaseDeposit, error) {
+func (d *depositDao) GetDeposits(conds map[string]interface {}) ([]entities.DatabaseDeposit, error) {
 	bd := (*baseDao)(unsafe.Pointer(d))
 	var result []map[string]interface {}
 	var err error

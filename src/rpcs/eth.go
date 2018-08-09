@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"io/ioutil"
 	"fmt"
-	"errors"
 	"strconv"
 	"math/rand"
 	"time"
@@ -132,7 +131,7 @@ func (rpc *eth) sendRequest(method string, params []interface {}) (EthSucceedRes
 		if err = json.Unmarshal(bodyStr, &resError); err != nil {
 			panic(utils.LogIdxEx(utils.ERROR, 23, err))
 		} else {
-			return resBody, utils.LogIdxEx(utils.ERROR, 26, errors.New(resError.Error.Message))
+			return resBody, utils.LogIdxEx(utils.ERROR, 26, resError.Error.Message)
 		}
 	}
 	if resBody.Result == nil {

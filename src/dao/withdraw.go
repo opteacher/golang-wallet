@@ -95,29 +95,29 @@ func (d *withdrawDao) RecvNewWithdraw(withdraw entities.BaseWithdraw) (int64, er
 	})
 }
 
-func (d *withdrawDao) WithdrawIntoStable(txHash string) (int64, error) {
+func (d *withdrawDao) WithdrawIntoStable(asset string, txHash string) (int64, error) {
 	return updatePartsTemplate((*baseDao)(unsafe.Pointer(d)), "WithdrawIntoStable",
-		[]interface {} { txHash }, nil)
+		[]interface {} { asset, txHash }, nil)
 }
 
-func (d *withdrawDao) WithdrawIntoChain(txHash string, height uint64, txIndex int) (int64, error) {
+func (d *withdrawDao) WithdrawIntoChain(asset string, txHash string, height uint64, txIndex int) (int64, error) {
 	return updatePartsTemplate((*baseDao)(unsafe.Pointer(d)), "WithdrawIntoChain",
-		[]interface {} { txHash }, map[string]interface {} {
+		[]interface {} { asset, txHash }, map[string]interface {} {
 			"height": height,
 			"tx_index": txIndex,
 		})
 }
 
-func (d *withdrawDao) SentForTxHash(txHash string, id int) (int64, error) {
+func (d *withdrawDao) SentForTxHash(asset string, txHash string, id int) (int64, error) {
 	return updateTemplate((*baseDao)(unsafe.Pointer(d)), "SentForTxHash",
-		[]interface {} { id }, []interface {} { txHash })
+		[]interface {} { asset, id }, []interface {} { txHash })
 }
 
-func (d *withdrawDao) GetWithdrawId(txHash string) (int, error) {
+func (d *withdrawDao) GetWithdrawId(asset string, txHash string) (int, error) {
 	var result []map[string]interface {}
 	var err error
 	bd := (*baseDao)(unsafe.Pointer(d))
-	conds := []interface {} { txHash }
+	conds := []interface {} { asset, txHash }
 	if result, err = selectTemplate(bd, "GetWithdrawId", conds); err != nil {
 		return -1, err
 	}
@@ -133,7 +133,7 @@ func (d *withdrawDao) GetWithdraws(conds map[string]interface {}) ([]entities.Da
 	var result []map[string]interface {}
 	var err error
 	if result, err = selectPartsTemplate(bd, "GetWithdraws", conds); err != nil {
-		return nil, err
+		return nil, utils.LogMsgEx(utils.ERROR, "查询提币记录失败：%v", err)
 	}
 
 	var ret []entities.DatabaseWithdraw
@@ -158,9 +158,9 @@ func (d *withdrawDao) GetWithdraws(conds map[string]interface {}) ([]entities.Da
 	return ret, nil
 }
 
-func (d *withdrawDao) CheckExistsById(id int) (bool, error) {
+func (d *withdrawDao) CheckExistsById(asset string, id int) (bool, error) {
 	bd := (*baseDao)(unsafe.Pointer(d))
-	conds := []interface {} { id }
+	conds := []interface {} { asset, id }
 	var result []map[string]interface {}
 	var err error
 	if result, err = selectTemplate(bd, "CheckExistsById", conds); err != nil {
@@ -176,4 +176,20 @@ func (d *withdrawDao) CheckExistsById(id int) (bool, error) {
 		return false, utils.LogMsgEx(utils.ERROR, "COUNT结果没有指定键值：num")
 	}
 	return *tmp.(*int64) != 0, nil
+}
+
+func (d *withdrawDao) DeleteById(asset string, id int) ([]entities.DatabaseWithdraw, error) {
+	conds := make(map[string]interface {})
+	conds["asset"] = asset
+	conds["id"] = id
+	if result, err := d.GetWithdraws(conds); err != nil {
+		return result, err
+	} else {
+		bd := (*baseDao)(unsafe.Pointer(d))
+		if _, err := deleteTemplate(bd, "DeleteById", []interface {} { asset, id }); err != nil {
+			return result, utils.LogMsgEx(utils.ERROR, "删除提币记录失败：%v", err)
+		} else {
+			return result, nil
+		}
+	}
 }

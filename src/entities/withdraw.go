@@ -25,6 +25,7 @@ type DatabaseWithdraw struct {
 
 func TurnToBaseWithdraw(wd *DatabaseWithdraw) BaseWithdraw {
 	var ret BaseWithdraw
+	ret.Id = wd.Id
 	ret.Asset = wd.Asset
 	ret.Address = wd.Address
 	ret.Amount = wd.Amount

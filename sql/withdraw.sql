@@ -17,13 +17,13 @@ CREATE TABLE IF NOT EXISTS withdraw (
 INSERT INTO withdraw (id, address, amount, asset) VALUES (?, ?, ?, ?)
 
 # SentForTxHash
-UPDATE withdraw SET tx_hash=?, status=2 WHERE id=?
+UPDATE withdraw SET tx_hash=?, status=2 WHERE asset=? AND id=?
 
 # WithdrawIntoStable
-UPDATE withdraw SET status=4 WHERE tx_hash=?
+UPDATE withdraw SET status=4 WHERE asset=? AND tx_hash=?
 
 # WithdrawIntoChain
-UPDATE withdraw SET status=3, %s WHERE tx_hash=?
+UPDATE withdraw SET status=3, %s WHERE asset=? AND tx_hash=?
 
 # GetAvailableId
 SELECT MAX(id) + 1 AS new_id FROM withdraw WHERE asset=?
@@ -35,10 +35,13 @@ SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_tim
 SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE asset=? AND status >= 1 AND status < 3
 
 # GetWithdrawId
-SELECT id FROM withdraw WHERE tx_hash=?
+SELECT id FROM withdraw WHERE asset=? AND tx_hash=?
 
 # GetWithdraws
 SELECT id, tx_hash, address, amount, asset, height, tx_index, status, create_time, update_time FROM withdraw WHERE %s
 
 # CheckExistsById
-SELECT COUNT(id) AS num FROM withdraw WHERE id=?
+SELECT COUNT(id) AS num FROM withdraw WHERE asset=? AND id=?
+
+# DeleteById
+DELETE FROM withdraw WHERE asset=? AND id=?

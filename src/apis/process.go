@@ -2,8 +2,6 @@ package apis
 
 import (
 	"strconv"
-	"strings"
-	"entities"
 	"encoding/json"
 	"dao"
 	"net/http"
@@ -11,15 +9,17 @@ import (
 	"fmt"
 )
 
-const getProcessPath	= "^/api/process/([A-Z]{3,})/txid/([a-zA-Z0-9]{1,})"
+const processByTxidPath	= "^/api/process/([A-Z]{3,})/txid/([a-zA-Z0-9]{1,})"
+const processByOpidPath	= "^/api/process/([A-Z]{3,})/type/(WITHDRAW|DEPOSIT)/id/([0-9]{1,})"
 
 var pcsRouteMap = map[string]interface {} {
-	fmt.Sprintf("%s %s", http.MethodGet, getProcessPath): queryProcess,
+	fmt.Sprintf("%s %s", http.MethodGet, processByTxidPath): queryProcessByTxid,
+	fmt.Sprintf("%s %s", http.MethodGet, processByOpidPath): queryProcessByOpid,
 }
 
-func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
+func queryProcessByTxid(w http.ResponseWriter, req *http.Request) []byte {
 	var resp RespVO
-	re := regexp.MustCompile(getProcessPath)
+	re := regexp.MustCompile(processByTxidPath)
 	params := re.FindStringSubmatch(req.RequestURI)[1:]
 	if len(params) == 0 {
 		resp.Code = 500
@@ -27,48 +27,64 @@ func queryProcess(w http.ResponseWriter, req *http.Request) []byte {
 		ret, _ := json.Marshal(resp)
 		return ret
 	}
+	asset := params[0]
 	if len(params) == 1 {
 		resp.Code = 500
-		resp.Msg = "需要指定查询的操作ID或交易哈希"
+		resp.Msg = "需要指定查询的交易哈希"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	txId := params[1]
+
+	if process, err := dao.GetProcessDAO().QueryProcessByTxHash(asset, txId); err != nil {
+		resp.Code = 500
+		resp.Msg = fmt.Sprintf("未找到指定交易：%v", err)
+		ret, _ := json.Marshal(resp)
+		return ret
+	} else {
+		resp.Code = 200
+		resp.Data = process
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+}
+
+func queryProcessByOpid(w http.ResponseWriter, req *http.Request) []byte {
+	var resp RespVO
+	var err error
+	re := regexp.MustCompile(processByOpidPath)
+	params := re.FindStringSubmatch(req.RequestURI)[1:]
+	if len(params) == 0 {
+		resp.Code = 500
+		resp.Msg = "需要指定币种的名字"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	asset := params[0]
+	if len(params) <= 2{
+		resp.Code = 500
+		resp.Msg = "需要指定查询的操作类型和操作id"
+		ret, _ := json.Marshal(resp)
+		return ret
+	}
+	typ := params[1]
+	var id int
+	if id, err = strconv.Atoi(params[2]); err != nil {
+		resp.Code = 500
+		resp.Msg = fmt.Sprintf("操作id必须是数字：%v", err)
 		ret, _ := json.Marshal(resp)
 		return ret
 	}
 
-	coinName := params[0]
-	txId := params[1]
-
-	var err error
-	var id int64 = -1
-	var typ string
-	if id, err = strconv.ParseInt(txId, 10, 64); err == nil {
-		typ = strings.ToUpper(req.URL.Query().Get("type"))
-		if typ != entities.WITHDRAW && typ != entities.DEPOSIT {
-			resp.Code = 500
-			resp.Msg = "用操作id查询进度，需附带操作类型：WITHDRAW/DEPOSIT"
-			ret, _ := json.Marshal(resp)
-			return ret
-		}
-	}
-
-	var process entities.DatabaseProcess
-	if id == -1 {
-		if process, err = dao.GetProcessDAO().QueryProcessByTypAndId(coinName, typ, int(id)); err != nil {
-			resp.Code = 500
-			resp.Msg = err.Error()
-			ret, _ := json.Marshal(resp)
-			return ret
-		}
+	if process, err := dao.GetProcessDAO().QueryProcessByTypAndId(asset, typ, id); err != nil {
+		resp.Code = 500
+		resp.Msg = fmt.Sprintf("未找到指定交易：%v", err)
+		ret, _ := json.Marshal(resp)
+		return ret
 	} else {
-		if process, err = dao.GetProcessDAO().QueryProcessByTxHash(coinName, txId); err != nil {
-			resp.Code = 500
-			resp.Msg = err.Error()
-			ret, _ := json.Marshal(resp)
-			return ret
-		}
+		resp.Code = 200
+		resp.Data = process
+		ret, _ := json.Marshal(resp)
+		return ret
 	}
-
-	resp.Code = 200
-	resp.Data = process
-	ret, _ := json.Marshal(resp)
-	return ret
 }

@@ -86,7 +86,7 @@ func TxIntoStable(txHash string, asset string) error {
 	if _, err = dao.GetDepositDAO().DepositIntoStable(txHash); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "更新充币记录失败：%v", err)
 	}
-	if _, err = dao.GetWithdrawDAO().WithdrawIntoStable(txHash); err != nil {
+	if _, err = dao.GetWithdrawDAO().WithdrawIntoStable(asset, txHash); err != nil {
 		return utils.LogMsgEx(utils.ERROR, "更新充币记录失败：%v", err)
 	}
 
