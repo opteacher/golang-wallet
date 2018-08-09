@@ -125,13 +125,21 @@ func (rpc *eth) sendRequest(method string, params []interface {}) (EthSucceedRes
 	}
 	utils.LogMsgEx(utils.DEBUG, fmt.Sprintf("Response body: %s", bodyStr), nil)
 
+	testBody := make(map[string]interface {})
+	if err = json.Unmarshal(bodyStr, &testBody); err != nil {
+		panic(utils.LogIdxEx(utils.ERROR, 23, err))
+	}
 	var resBody EthSucceedResp
-	if err = json.Unmarshal(bodyStr, &resBody); err != nil {
+	if _, ok := testBody["error"]; ok {
 		var resError EthFailedResp
 		if err = json.Unmarshal(bodyStr, &resError); err != nil {
 			panic(utils.LogIdxEx(utils.ERROR, 23, err))
 		} else {
 			return resBody, utils.LogIdxEx(utils.ERROR, 26, resError.Error.Message)
+		}
+	} else {
+		if err = json.Unmarshal(bodyStr, &resBody); err != nil {
+			panic(utils.LogIdxEx(utils.ERROR, 23, err))
 		}
 	}
 	if resBody.Result == nil {

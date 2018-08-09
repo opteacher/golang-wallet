@@ -4,30 +4,14 @@ import (
 	"log"
 	"rpcs"
 	"testing"
-	"entities"
-	"dao"
+	"fmt"
 )
 
 func TestGetTransactions(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 
 	//Test RPC
-	var err error
-	var totalAffectRows int64
-	var tempAffectRows int64
-	var txs []entities.BaseDeposit
-	txs, err = rpcs.GetRPC("ETH").GetTransactions(120, []string {
-		"0x43faead79328ca23fbb179af73ab8c0153ed990c",
-	})
-	totalAffectRows = 0
-	depositDAO := dao.GetDepositDAO()
-	for _, tx := range txs {
-		if tempAffectRows, err = depositDAO.AddScannedDeposit(&tx); err != nil {
-			log.Fatal(err)
-		}
-		totalAffectRows += tempAffectRows
-	}
-	log.Printf("Add deposits succeed: %d\n", totalAffectRows)
+	fmt.Println(rpcs.GetRPC("ETH").GetTransactions(0))
 }
 
 func TestSendTransaction(t *testing.T) {
@@ -35,7 +19,6 @@ func TestSendTransaction(t *testing.T) {
 	var txHash string
 	if txHash, err = rpcs.GetRPC("ETH").SendFrom(
 		"0x47e8e8e49a8c1c308e84439f2c55ef18710f5ed6",
-		"0x65711d2e616b437e65273d30d4385fd0028a461b",
 		10.23456); err != nil {
 		log.Fatal(err)
 	}
@@ -50,4 +33,8 @@ func TestNewAddress(t *testing.T) {
 	} else {
 		log.Println(addr)
 	}
+}
+
+func TestGetTxExistsHeight(t *testing.T) {
+	fmt.Println(rpcs.GetRPC("ETH").GetTxExistsHeight("abcd"))
 }
