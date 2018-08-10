@@ -1,7 +1,7 @@
 {
 	"db": {
 		"url": "database:3306",
-		"name": "test",
+		"name": "wallet_service",
 		"username": "root",
 		"password": "12345",
 		"max_conn": 20
@@ -23,11 +23,7 @@
 			"port": 8037
 		},
 		"mq": {
-			"active": true
-		},
-		"socket": {
-			"active": false,
-			"port": 8038
+			"active": false
 		}
 	},
 	"callbacks": {
