@@ -37,6 +37,8 @@ services:
       args:
         coin: eth
         port: 8037
+    volumes:
+      - ./logs:/var/log/wallet/eth
     depends_on:
       - database
       - redis
@@ -48,6 +50,8 @@ services:
       args:
         coin: btc
         port: 8038
+    volumes:
+      - ./logs:/var/log/wallet/btc
     depends_on:
       - database
       - redis
