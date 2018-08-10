@@ -29,6 +29,10 @@ services:
     image: redis
     restart: unless-stopped
     command: --requirepass abcd
+    ports:
+      - "6379:6379"
+    expose:
+      - "6379"
 
   eth:
     container_name: wallet-eth
