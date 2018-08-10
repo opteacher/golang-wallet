@@ -1,15 +1,14 @@
 {
 	"name": "BTC",
 	"url": "http://18.144.17.127:8332",
-	"assistSite": "http://18.144.17.127:38332",
 	"decimal": 18,
 	"stable": 12,
 	"rpcUser": "123",
 	"rpcPassword": "123",
-	"collect": "0xb78f085e2759baf782c705cd3a9fcb5d39fa7b3c",
+	"collect": "2MscuBnDRh6PR7UkALXYLYgPyiiJBiVswPK",
 	"minCollect": 0.0001,
 	"collectInterval": 30,
-	"deposit": "",
+	"deposit": "deposit",
 	"unlockDuration": 0,
-	"withdraw": "0x1c6f567e577a351917615fb1c8f1222dc96ba18d"
+	"withdraw": "2MscuBnDRh6PR7UkALXYLYgPyiiJBiVswPK"
 }
