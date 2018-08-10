@@ -6,7 +6,7 @@ services:
     volumes:
       - ./config/wallet.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - "8089:8089"
+      - "8089:80"
     expose:
       - "8089"
     depends_on:
