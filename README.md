@@ -7,11 +7,11 @@
 * mysql：存储流水和交易
 * redis：缓存交易状态
 ## 安装和配置
-下载项目文件
+### 下载项目文件
 
 `> git clone git@github.com:opteacher/golang-wallet.git`
 
-配置项目
+### 配置项目
 * `config/settings.json` 全局配置
 ```json
 {
@@ -133,7 +133,18 @@
 | - | - | withdraw_url | 提币URL（同上） |
 | - | - | collect_url | 归集URL（同上） |
 
+
+### 下载依赖包
+```
+    go get -u github.com/go-sql-driver/mysql
+	go get -u github.com/stretchr/testify
+	go get -u github.com/go-redis/redis
+```
+
 ## 使用说明
+### 运行钱包
+`go run wallet.go`
+
 ### API接口表
 
 | Method | URL | Parameters | - |
